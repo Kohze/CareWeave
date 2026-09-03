@@ -1,9 +1,19 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 declare global {
 	interface Window {
 		__registeredTools: Array<{ name: string; execute: (input: Record<string, unknown>) => Promise<unknown> }>;
 	}
+}
+
+async function waitForViewToSettle(page: Page, selector: string): Promise<void> {
+	await expect.poll(() => page.evaluate((targetSelector) => {
+		const strip = document.querySelector<HTMLElement>('.column-strip')!;
+		const target = document.querySelector<HTMLElement>(targetSelector)!;
+		const inset = Number.parseFloat(getComputedStyle(strip).scrollPaddingInlineStart) || 20;
+		return Math.abs(strip.scrollLeft - Math.max(0, target.offsetLeft - inset));
+	}, selector)).toBeLessThan(2);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -112,7 +122,8 @@ test('does not draw a timeline rail through an empty day', async ({ page }) => {
 	expect(await page.locator('.timeline').evaluate((timeline) => getComputedStyle(timeline, '::before').display)).toBe('none');
 });
 
-test('lets horizontal gestures inside a card continue through the column ribbon', async ({ page }) => {
+test('lets horizontal gestures inside a card continue through the column ribbon', async ({ page }, testInfo) => {
+	test.skip(testInfo.project.name === 'mobile', 'Mouse-wheel horizontal gestures are covered at both iPad viewports; mobile uses touch swiping.');
 	const card = page.locator('.timeline-section');
 	const box = await card.boundingBox();
 	expect(box).not.toBeNull();
@@ -132,7 +143,8 @@ test('changes event details without horizontally scrolling the board', async ({ 
 	await expect.poll(() => strip.evaluate((element, start) => Math.abs(element.scrollLeft - start), initialScroll)).toBeLessThan(2);
 });
 
-test('aligns the overview and schedule grids on the same center line', async ({ page }) => {
+test('aligns the overview and schedule grids on the same center line', async ({ page }, testInfo) => {
+	test.skip(testInfo.project.name === 'mobile', 'The mobile layout intentionally collapses both areas to one column.');
 	const geometry = await page.evaluate(() => {
 		const overviewCards = Array.from(document.querySelectorAll<HTMLElement>('.today-column .glance-grid > *'));
 		const timeline = document.querySelector<HTMLElement>('.today-column .timeline-section')!;
@@ -250,6 +262,7 @@ test('imports Gmail previews and creates a draft only after visible approval', a
 	await page.reload();
 	await expect(page.locator('.app-shell')).toHaveAttribute('data-ready', 'true');
 	await page.getByRole('button', { name: /Attention$/ }).click();
+	await waitForViewToSettle(page, '.attention-column');
 	const checkGmail = page.getByRole('button', { name: 'Check Gmail' });
 	await expect(checkGmail).toBeVisible();
 	await checkGmail.click();
@@ -292,6 +305,71 @@ test('registers the WebMCP tool suite and tools update the same visible state', 
 	});
 	await expect(page.getByRole('heading', { name: new RegExp(new Date(`${tomorrow}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long' })) })).toBeVisible();
 	await expect(page.getByRole('article', { name: /Appointment with Dr Patel/ })).toBeVisible();
+});
+
+test('completes the judge WebMCP journey while keeping the appointment unchanged', async ({ page }) => {
+	await expect.poll(() => page.evaluate(() => window.__registeredTools.length)).toBe(32);
+	const discovery = await page.evaluate(async () => {
+		const call = (name: string, input: Record<string, unknown> = {}) => window.__registeredTools
+			.find((tool) => tool.name === name)!
+			.execute(input) as Promise<{ success: boolean; summary: string; data?: unknown; needsUserConfirmation?: boolean }>;
+		const date = new Date();
+		date.setDate(date.getDate() + 1);
+		const tomorrow = new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+		const original = JSON.parse(localStorage.getItem('careweave.household.v1') ?? '{}').commitments
+			.find((item: { id: string }) => item.id === 'event-doctor');
+		const brief = await call('get_day_brief');
+		const pacing = await call('check_day_pacing', { date: tomorrow });
+		const commitments = await call('get_commitments', { date: tomorrow, kind: 'health' });
+		const focus = await call('focus_date', { date: tomorrow });
+		const route = await call('get_route_options', { commitment_id: 'event-doctor' });
+		const showRoute = await call('show_route', { commitment_id: 'event-doctor' });
+		return {
+			tomorrow,
+			original: { startAt: original.startAt, status: original.status },
+			brief,
+			pacing,
+			commitments,
+			focus,
+			route,
+			showRoute
+		};
+	});
+
+	expect(discovery.brief.success).toBe(true);
+	expect(discovery.pacing.success).toBe(true);
+	expect(discovery.commitments.success).toBe(true);
+	expect(discovery.commitments.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'event-doctor' })]));
+	expect(discovery.focus.success).toBe(true);
+	expect(discovery.route.success).toBe(true);
+	expect(discovery.showRoute.success).toBe(true);
+	await expect(page.getByRole('heading', { name: 'To Green Lane Medical Centre' })).toBeVisible();
+
+	const planning = await page.evaluate(async () => {
+		const createPlan = window.__registeredTools.find((tool) => tool.name === 'create_appointment_request_plan')!;
+		const result = await createPlan.execute({
+			commitment_id: 'event-doctor',
+			request: 'reschedule',
+			email_message: 'Please offer a calm morning appointment and confirm any new time.'
+		}) as { success: boolean; summary: string; data?: { id: string; status: string }; needsUserConfirmation?: boolean };
+		const stored = JSON.parse(localStorage.getItem('careweave.household.v1') ?? '{}');
+		const appointment = stored.commitments.find((item: { id: string }) => item.id === 'event-doctor');
+		const plan = stored.plans.find((item: { id: string }) => item.id === result.data?.id);
+		return {
+			result,
+			appointment: { startAt: appointment.startAt, status: appointment.status },
+			planStatus: plan?.status
+		};
+	});
+
+	expect(planning.result.success).toBe(true);
+	expect(planning.result.needsUserConfirmation).toBe(true);
+	expect(planning.result.summary).toMatch(/Nothing has been sent or changed yet/i);
+	expect(planning.appointment).toEqual(discovery.original);
+	expect(planning.planStatus).toBe('draft');
+	const review = page.getByRole('dialog', { name: /Ask to move Appointment with Dr Patel/ });
+	await expect(review).toBeVisible();
+	await expect(review.getByText('Nothing has been sent yet. Check each detail below.')).toBeVisible();
 });
 
 test('shows a complete approval preview before saving a suggested message locally', async ({ page }) => {
@@ -371,6 +449,7 @@ test('shows a truthful disconnected state when the host rejects part of registra
 
 test('lets a trusted relative offer help while the account owner keeps control', async ({ page }) => {
 	await page.getByRole('button', { name: 'Support', exact: true }).click();
+	await waitForViewToSettle(page, '.support-column');
 	await expect(page.getByRole('heading', { name: 'Family support' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Today is on track' })).toBeVisible();
 	await expect(page.getByText('Completed', { exact: true })).toBeVisible();
@@ -380,24 +459,27 @@ test('lets a trusted relative offer help while the account owner keeps control',
 	await appointmentCard.getByRole('button', { name: 'Offer help' }).click();
 	await expect(appointmentCard.getByRole('button', { name: 'Offer sent' })).toBeDisabled();
 	await page.getByRole('button', { name: 'Open main board' }).click();
+	await waitForViewToSettle(page, '.today-column');
 	await page.getByRole('button', { name: /Attention/ }).click();
+	await waitForViewToSettle(page, '.attention-column');
 	await expect(page.getByRole('heading', { name: 'Sam offered to help' })).toBeVisible();
 	await page.getByRole('button', { name: 'Accept help' }).click();
 	await expect(page.getByRole('heading', { name: 'Sam offered to help' }).locator('..').locator('..')).toHaveClass(/resolved/);
 
 	await page.getByRole('button', { name: 'Support', exact: true }).click();
+	await waitForViewToSettle(page, '.support-column');
 	await expect(page.getByText(/Latest offer:/).locator('..')).toContainText('accepted');
 	if ((await page.viewportSize())?.width === 1024) await page.screenshot({ path: 'artifacts/audit-final-family-support.png' });
 });
 
-test('shows truthful freshness and keeps the saved board usable offline', async ({ page, context }) => {
+test('keeps the saved fictional board usable offline without demo warnings', async ({ page, context }) => {
 	const dayColumn = page.locator('.today-column');
-	await expect(dayColumn.getByRole('status')).toContainText(/Updated just now/i);
+	const elenaCard = dayColumn.getByRole('article', { name: /Elena visits/ });
+	await expect(dayColumn.locator('.freshness-strip')).toHaveCount(0);
 	await context.setOffline(true);
-	await expect(dayColumn.getByRole('status')).toContainText(/Offline/i);
-	await expect(dayColumn.getByText('Elena visits')).toBeVisible();
+	await expect(elenaCard).toBeVisible();
 	await context.setOffline(false);
-	await expect(dayColumn.getByRole('status')).toContainText(/Updated/i);
+	await expect(elenaCard).toBeVisible();
 });
 
 test('connects reminder acknowledgement to a supporter response', async ({ page }) => {
@@ -417,6 +499,7 @@ test('connects reminder acknowledgement to a supporter response', async ({ page 
 
 test('keeps support invitations and disclosure choices outside everyday navigation', async ({ page }) => {
 	await page.getByRole('button', { name: 'Support', exact: true }).click();
+	await waitForViewToSettle(page, '.support-column');
 	await page.getByRole('button', { name: 'Manage access' }).click();
 	const dialog = page.getByRole('dialog', { name: 'Who can help' });
 	await expect(dialog).toBeVisible();

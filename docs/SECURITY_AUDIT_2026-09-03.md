@@ -11,6 +11,9 @@
 - **Supabase design:** conditionally sound after the changes made during this
   review, but it is still a design document. No project, migration, RLS policy,
   Auth flow, Realtime subscription, or cross-account test exists to verify.
+- **Challenge architecture decision:** defer Supabase integration until after
+  judging. It is not needed for same-page WebMCP collaboration and would add
+  authentication friction and new failure modes to the deterministic demo.
 - **Anonymous demo login:** safe in the proposed form only: each guest gets a
   unique Supabase Auth user and isolated fictional household; guests receive no
   Gmail or external-side-effect capability.
@@ -23,8 +26,8 @@ environment because those production resources are not connected.
 
 | ID | Severity | Finding | Required resolution |
 |---|---|---|---|
-| CW-01 | Blocker | Supabase is not implemented. `package.json` has no Supabase packages and `src/lib/app.ts` still treats `localStorage` as canonical. | Apply and test the setup in `SUPABASE_HANDOFF.md`; do not claim cross-device sync before two-account RLS tests pass. |
-| CW-02 | High | The proposed cookie-SSR flow cannot run under the current `adapter-static` and global `prerender = true` configuration. | Move to a Vercel server-capable SvelteKit deployment and authenticated server routes before adding SSR Auth. |
+| CW-01 | Production blocker; not a challenge blocker | Authenticated cross-device persistence is not implemented. `src/lib/app.ts` still treats `localStorage` as canonical. | Keep the fictional submission explicitly device-local. Before accepting real data or claiming cross-device sync, apply the setup in `SUPABASE_HANDOFF.md` and pass two-account RLS tests. |
+| CW-02 | Production high; inactive in challenge build | The proposed cookie-SSR flow cannot run under the current `adapter-static` and global `prerender = true` configuration. | Move to a Vercel server-capable SvelteKit deployment and authenticated server routes before adding SSR Auth; do not make that migration immediately before judging. |
 | CW-03 | High | `/api/realtime/session` has origin and in-memory rate checks but no user authentication. Gmail endpoints trust only possession of the browser-specific encrypted token cookie. | Verify a Supabase JWT on every voice/Gmail endpoint, derive the user ID from verified claims, and bind Gmail tokens to that user and household. |
 | CW-04 | High | Gmail draft creation accepts arbitrary `to`, `subject`, and `body` values from same-origin browser code. The visible review plan is not revalidated by the server. | Accept a plan ID, reload and verify the current unexpired plan/revision server-side, use the stored payload, and add idempotency before calling Gmail. |
 | CW-05 | High for multi-user use | Supporter/carer tools accept `supporter_person_id` or `carer_person_id` from the caller. The confirmed-change WebMCP tools trust a boolean assertion from the host. These are honest demo controls, not authentication or proof of external confirmation. | Build role-specific server mutations from the authenticated identity. Keep consequential reconciliation behind a deliberate UI confirmation or independently verifiable provider event. |
@@ -84,18 +87,20 @@ explicitly recommends CAPTCHA/Turnstile for abuse prevention. See the
 
 ## Verification performed
 
-- `npm run test`: 40/40 unit tests passed.
+- `npm run test`: 41/41 unit tests passed.
 - `npm run check`: zero Svelte errors or warnings.
 - `npm run build`: static production build succeeded.
-- `npm run test:e2e`: passed; the suite's last-run record reports no failures.
+- `npm run test:e2e`: 97 applicable browser checks passed; 38
+  viewport-specific checks were deliberately skipped.
 - `npm audit --omit=dev`: zero production vulnerabilities.
 - Full `npm audit`: three linked low-severity entries caused by the one
   transitive `cookie` advisory; zero moderate, high, or critical entries.
 - Production bundle pattern scan found no apparent application secrets.
 
-## Mandatory go-live gates
+## Mandatory real-data go-live gates
 
-Do not load real household or Gmail data until all of these are complete:
+These are production gates, not hackathon-submission gates. Do not load real
+household or Gmail data until all of these are complete:
 
 1. Supabase migration applied and Security Advisor reviewed.
 2. Permanent-user, anonymous-user, cross-user, revoked-user, and stale-revision

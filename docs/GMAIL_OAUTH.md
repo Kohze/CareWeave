@@ -15,7 +15,7 @@ The integration can read recent Gmail message metadata/snippets and create draft
 
 1. Open **Google Auth Platform → Branding** and enter the app name, support email, and developer contact.
 2. Choose **Internal** only if all intended users belong to the same Google Workspace organization. Otherwise choose **External**.
-3. Add the production homepage and privacy-policy URLs when you publish the app.
+3. Set the application homepage to `https://care-weave.vercel.app/`. Add the final privacy-policy URL before requesting public verification.
 4. Under **Data Access**, add exactly these scopes:
 
    - `https://www.googleapis.com/auth/gmail.readonly`
@@ -32,7 +32,7 @@ These Gmail scopes are restricted. A public external app normally needs Google's
 3. Add the exact authorized redirect URI:
 
    - Local development: `http://localhost:5173/api/gmail/callback`
-   - Vercel production: `https://YOUR_PRODUCTION_DOMAIN/api/gmail/callback`
+   - Vercel production: `https://care-weave.vercel.app/api/gmail/callback`
 
 4. Save the client ID and client secret. Do not put either value in client-side code.
 
@@ -44,7 +44,7 @@ In **Vercel → Project → Settings → Environment Variables**, add these as s
 
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_OAUTH_REDIRECT_URI=https://YOUR_PRODUCTION_DOMAIN/api/gmail/callback`
+- `GOOGLE_OAUTH_REDIRECT_URI=https://care-weave.vercel.app/api/gmail/callback`
 - `GMAIL_TOKEN_ENCRYPTION_KEY` with at least 32 random characters
 
 Generate a token-encryption secret locally, for example:
@@ -65,7 +65,7 @@ Never commit `.env`.
 
 ## 5. Connect and test
 
-1. Open CareWeave and choose **Attention**.
+1. Open [CareWeave on Vercel](https://care-weave.vercel.app/) and choose **Attention**.
 2. Choose **Connect Gmail**.
 3. Select the intended Google account and approve the two requested Gmail scopes.
 4. After returning to CareWeave, choose **Check Gmail**.

@@ -1,5 +1,15 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+
+async function waitForViewToSettle(page: Page, selector: string): Promise<void> {
+	await expect.poll(() => page.evaluate((targetSelector) => {
+		const strip = document.querySelector<HTMLElement>('.column-strip')!;
+		const target = document.querySelector<HTMLElement>(targetSelector)!;
+		const inset = Number.parseFloat(getComputedStyle(strip).scrollPaddingInlineStart) || 20;
+		return Math.abs(strip.scrollLeft - Math.max(0, target.offsetLeft - inset));
+	}, selector)).toBeLessThan(2);
+}
 
 test.beforeEach(async ({ page }) => {
 	await page.route('https://tile.openstreetmap.org/**', (request) => request.abort());
@@ -68,8 +78,7 @@ test('uses readable text, forgiving targets, and a complete iPad week', async ({
 test('calendar events open complete details and clearly track selection', async ({ page }, testInfo) => {
 	const elenaCard = page.getByRole('article', { name: /Elena visits/ });
 	const elenaButton = elenaCard.getByRole('button').first();
-	await expect(elenaButton).toHaveAttribute('aria-expanded', 'false');
-	await elenaButton.click();
+	// The next upcoming item is intentionally selected and explained on first load.
 	await expect(elenaButton).toHaveAttribute('aria-expanded', 'true');
 	await expect(elenaCard).toHaveClass(/selected/);
 	let details = page.getByLabel('Helpful details');
@@ -124,8 +133,9 @@ test('calendar events open complete details and clearly track selection', async 
 	}
 
 	await page.getByRole('button', { name: 'Close details' }).click();
-	await expect(page.getByRole('heading', { name: 'Appointment with Dr Patel' })).not.toBeVisible();
-	await expect(doctorButton).toHaveAttribute('aria-expanded', 'false');
+	await expect(page.getByRole('button', { name: 'Close details' })).toHaveCount(0);
+	await expect(page.getByRole('heading', { name: 'Appointment with Dr Patel' })).toBeVisible();
+	await expect(doctorButton).toHaveAttribute('aria-expanded', 'true');
 });
 
 test('offers persistent large text and high contrast with focus returned to the opener', async ({ page }, testInfo) => {
@@ -306,6 +316,7 @@ test('keeps support, urgent-help, and privacy dialogs accessible', async ({ page
 	test.skip(testInfo.project.name !== 'ipad-landscape', 'Protected dialog audit runs once.');
 
 	await page.getByRole('button', { name: 'Support', exact: true }).click();
+	await waitForViewToSettle(page, '.support-column');
 	await page.getByRole('button', { name: 'Manage access' }).click();
 	let results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
 	expect(results.violations, 'Support-access dialog accessibility violations').toEqual([]);

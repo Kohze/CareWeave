@@ -33,7 +33,7 @@ Each example has a primary limitation or context, a realistic high-value task, a
 - **Partial** means a path exists but lacks a material assurance, accessibility, or recovery capability.
 - **Blocked** means pretending to support the task would be unsafe or misleading.
 
-The rescored review uses the current UI and source model, 65 passing browser tests across iPad landscape, iPad portrait, and mobile, 38 passing domain/WebMCP/OAuth tests, the WCAG audit, and the standards cross-check at the end of this document. Synthetic users cannot reveal comprehension, trust, fatigue, speech-recognition quality, or real-world error rates; moderated sessions remain mandatory.
+The rescored review uses the current UI and source model, the current automated browser, domain, WebMCP, OAuth, and accessibility suites, the WCAG audit, and the standards cross-check at the end of this document. Synthetic users cannot reveal comprehension, trust, fatigue, speech-recognition quality, or real-world error rates; moderated sessions remain mandatory.
 
 ## Remaining concrete gaps after implementation
 
@@ -45,7 +45,7 @@ These are implementation findings, not speculative future features:
 4. **Reminder delivery stops at the visible board.** Done, snooze, help request, and supporter acknowledgement work, but web push, quiet hours, retry, escalation timers, and missed-reminder recovery are not connected.
 5. **Care updates prove policy, not identity.** Assigned-carer and recent-timestamp checks work, completion cannot regress, and feed freshness updates; provider roster integration, authenticated employer identity, corrections, and professional audit remain missing.
 6. **Calendar correctness is still incomplete.** Recurrence expansion, named zones, provider IDs/versions, overlap checks, and duplicate candidates exist, but per-occurrence exceptions, series editing, cross-zone DST conformance, merge UI, and provider reconciliation do not.
-7. **Sensitive data is browser-local demo data.** Household data, support roles, outbox records, and history use `localStorage`; there is no account, encryption-at-rest boundary, multi-device sync, backup, retention control, or remote deletion.
+7. **Sensitive data is browser-local demo data.** Household data, support roles, outbox records, and history use `localStorage`; there is no account, encryption-at-rest boundary, multi-device sync, backup, retention control, or remote deletion. This is a production limitation, not a blocker for the deterministic fictional WebMCP challenge demo.
 8. **Most connections remain adapters on paper.** Gmail now has a first-party OAuth read/draft path, but Microsoft Graph, calendar, care provider, production routing, and actual outbound sending are not connected. The Gmail cookie-backed token store is suitable only for a private demonstration until household authentication and server-side per-user token storage are added.
 9. **Language support is a stored preference, not localisation.** Dates, UI copy, speech configuration, and summaries are still English-only.
 10. **Accessibility evidence remains mainly automated.** The suite now covers all main views plus display, voice, support setup, urgent help, and privacy dialogs, but VoiceOver, Switch Control, magnification, mounted-distance use, real room acoustics, and comprehension by people with cognitive disabilities have not been demonstrated with users.

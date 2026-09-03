@@ -11,8 +11,8 @@ git -c "safe.directory=%CD%" add --all || goto :error
 
 git -c "safe.directory=%CD%" diff --cached --quiet
 if errorlevel 1 (
-  echo Creating the initial commit...
-  git -c "safe.directory=%CD%" commit -m "first commit" || goto :error
+  echo Creating the submission-ready commit...
+  git -c "safe.directory=%CD%" commit -m "Prepare CareWeave WebMCP submission" || goto :error
 ) else (
   echo No new changes need to be committed.
 )

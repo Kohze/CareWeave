@@ -1,15 +1,29 @@
 # CareWeave
 
-### A calmer day, together.
+### Everyday care, woven together.
 
-CareWeave is a voice-first household dayboard for older adults. It turns appointments, carer visits, food needs, shopping, routes, and actionable email into one calm, shared view designed for an iPad on the wall.
+CareWeave weaves appointments, care visits, food, weather, routes, and actionable email into one calm shared dayboard where a person and WebMCP agent can understand the day, focus the same screen, and prepare safe next steps together.
 
-Built for the OpenAI WebMCP Challenge with SvelteKit, Svelte 5, Vite, TypeScript, OpenAI Realtime, Leaflet, OpenStreetMap, Open-Meteo, Atmosphere, and Meteocons.
+**Live app:** [care-weave.vercel.app](https://care-weave.vercel.app/)
+
+Built for the OpenAI WebMCP Challenge with SvelteKit, Svelte 5, Vite, TypeScript, OpenAI Realtime, Leaflet, OpenStreetMap, Open-Meteo, Atmosphere, Meteocons, and Lucide.
 
 ![CareWeave running in an iPad landscape viewport](artifacts/audit-final-ipad-landscape.png)
 
 > [!IMPORTANT]
 > CareWeave is a challenge prototype, not a medical device or production care system. The bundled household, clinic, mailbox, addresses, and routes are fictional. No real email is sent by the demo.
+
+## Judge it in 60 seconds
+
+Open [CareWeave](https://care-weave.vercel.app/) in ChatGPT's in-app browser. No account, credentials, or setup are required; every judge starts with the same safe fictional household.
+
+Ask the browser agent:
+
+1. **“What matters today, and is tomorrow rushed?”** The agent reads structured plans and explains CareWeave's calm-day reasoning.
+2. **“Show me tomorrow and put the route to Dr Patel on screen.”** The agent changes the same interface the person is looking at instead of merely describing it.
+3. **“Prepare a request to move the appointment to a calm morning.”** CareWeave creates a visible, expiring review plan. Nothing is sent and the confirmed appointment does not change.
+
+That loop—**understand together, focus the shared screen, prepare safely, let the person decide**—is the core WebMCP experience.
 
 ## Contents
 
@@ -54,11 +68,26 @@ This produces a genuinely shared workspace:
 
 The same domain handlers power touch interactions, WebMCP, and the embedded conversational voice agent. There is one source of truth rather than three implementations that can disagree.
 
+CareWeave is not a conventional dashboard with a chat box attached. WebMCP lets the agent work with structured household state, reveal its work on the person's screen, and stop at a deliberate human approval boundary. Without WebMCP, an agent would have to infer dates and controls from pixels, could not reliably share visual focus, and would struggle to distinguish a requested appointment change from a confirmed one.
+
+### Alignment with the judging criteria
+
+| Criterion | What CareWeave demonstrates |
+|---|---|
+| **WebMCP leverage** | 32 validated tools form complete workflows across reading, planning, shared visual focus, reviewable drafts, reminders, and support—with trust annotations, state revisions, and rollback-safe registration. |
+| **Execution** | A deployed, installable, responsive PWA with deterministic demo data, accessible touch UI, weather, maps, voice, offline shell, and automated browser tests. |
+| **Potential impact** | A specific audience—older adults and trusted supporters—gets one calmer way to coordinate fragmented appointments, care, food, travel, and messages. |
+| **Creativity and ambition** | The agent and person collaborate through the same calm household surface; the design treats autonomy, shared attention, and truthful state as product features rather than adding chat to a calendar. |
+
+### Why the challenge build is intentionally account-free
+
+WebMCP operates on the same open CareWeave page as the person, so a remote database is not required to demonstrate the core collaboration. Device-local fictional state makes judging instant, deterministic, resettable, and safe. Authentication and cross-device persistence are documented as production work, but deliberately kept out of the submission path because they add setup friction without improving WebMCP leverage.
+
 ## Feature tour
 
 | Calm dayboard | Real map and written route |
 |---|---|
-| ![The CareWeave day view](artifacts/audit-final-day.png) | ![A route displayed on a real map](artifacts/audit-final-real-map.png) |
+| ![The CareWeave day view](artifacts/audit-final-day.png) | ![A route displayed on a real map](artifacts/audit-final-careweave-route.png) |
 
 | Human review before action | Conversational voice |
 |---|---|
@@ -134,28 +163,26 @@ The Gmail connection uses Google's OAuth web-server flow independently of voice.
 ## Architecture
 
 ```text
-ChatGPT / Codex in a compatible browser
-              │
-              │  document.modelContext.registerTool
-              ▼
-        WebMCP adapter (32 tools) ───────────────┐
-                                                │
-Wall iPad                                      ▼
-  ├── Svelte touch UI ───────────────────► household domain store ──► local persistence
-  │                                             │
-  └── OpenAI Realtime over WebRTC               ├── calm planning rules
-             │                                  ├── revision checks
-             └── function tools (23) ───────────┤
-                                                │
-Demo mailbox ──► untrusted summaries ───────────┤
-                                                │
-Sandbox outbox ◄── reviewed action plans ───────┘
+Person + ChatGPT in the same compatible browser tab
+                         |
+                         | document.modelContext.registerTool
+                         v
+               WebMCP adapter (32 tools)
+                         |
+                         v
+              shared household domain store
+                 /          |          \
+        Svelte touch UI  planning rules  reviewable action plans
+                         |
+                         v
+            resettable device-local demo state
 ```
 
 WebMCP and embedded voice are related but distinct adapters:
 
 - A compatible ChatGPT/Codex browser discovers the 32 WebMCP tools attached to the open page.
-- Ordinary iPad Safari is not a WebMCP host. It uses the embedded Realtime agent, which receives a 23-tool safe subset backed by the same functions.
+- The person and WebMCP agent share the domain store inside that open page; the challenge build does not claim cross-device synchronization.
+- Ordinary iPad Safari is not a WebMCP host. It can use the embedded Realtime agent, which receives a 23-tool safe subset backed by the same functions on that device.
 - Final approval, verified external calendar changes, undo, and demo reset are never available to the voice model. They require deliberate touch interaction.
 
 ## WebMCP implementation
@@ -259,7 +286,7 @@ These tools are a key part of the WebMCP demonstration: the agent does not merel
 |---|---|---|---|
 | `create_appointment_request_plan` | `commitment_id`; `request`: `reschedule` or `cancel`; `email_message`: 5–2,000 characters | Staged mutation | Creates an expiring draft containing the verified recipient, subject, message, intended status update, and warnings. It sends nothing and preserves the confirmed appointment time. |
 | `create_attention_reply_plan` | `attention_id`; `email_message`: 2–2,000 characters | Untrusted content, staged mutation | Creates a reviewable reply plan from an attention item. The exact recipient and message must be checked because the source can be wrong or misleading. |
-| `suggest_support` | `supporter_person_id`; `category`: `appointment`, `shopping`, `transport`, or `check_in`; `message`; `commitment_id?` | Role-scoped proposal | Adds a non-binding offer to the older adult's Attention view. It verifies active `suggest_help` access and changes no calendar item. |
+| `suggest_support` | `supporter_person_id`; `category`: `appointment`, `shopping`, `transport`, or `check_in`; `message`; `commitment_id?` | Challenge role-scoped proposal | Adds a non-binding offer to the older adult's Attention view. The fictional build verifies active `suggest_help` access and changes no calendar item; production must derive supporter identity from authentication. |
 | `respond_to_reminder` | `reminder_id`; `response`: `done`, `snooze`, or `need_help`; `snooze_minutes?`: 10–240 | Bounded state change | Records the person's explicit response. Asking for help makes the request visible only to an active, permitted support circle; it never calls emergency services. |
 
 The two email-planning tools return `needsUserConfirmation: true` and open the same large review dialog a person gets from the touch UI. Support proposals and reminder responses instead use their visible, reversible household states.
@@ -270,9 +297,9 @@ The two email-planning tools return `needsUserConfirmation: true` and open the s
 |---|---|---|---|
 | `approve_action_plan` | `plan_id`; `user_confirmed: true` | Executes the frozen plan | Requires explicit approval of the exact visible plan. A stale or expired revision fails closed. Without Gmail, it saves a local suggestion and sends nothing. |
 | `discard_action_plan` | `plan_id` | Discards one draft | Sends nothing and changes no appointment. |
-| `respond_to_help_request` | `supporter_person_id`; `reminder_id`; `response`: `acknowledged` or `completed` | Assigns or completes ordinary help | Requires active `respond_to_help` permission. Completion cannot be claimed before acknowledgement, and it never changes a medical appointment. |
+| `respond_to_help_request` | `supporter_person_id`; `reminder_id`; `response`: `acknowledged` or `completed` | Challenge help coordination | The fictional build requires active `respond_to_help` permission. Completion cannot be claimed before acknowledgement, it never changes a medical appointment, and production must bind supporter identity to authentication. |
 | `record_care_visit_status` | `carer_person_id`; `commitment_id`; `status`; `observed_at` | Updates shared visit status | Requires the named carer to be assigned to that care event, bounds observation time, prevents completed-state regression, and exposes no professional note. Production must derive identity from authentication. |
-| `update_support_offer_fulfillment` | `supporter_person_id`; `offer_id`; `status`: `acknowledged` or `completed` | Updates accepted-help ownership | Only the active supporter who made an accepted offer can report handling or completion. It never edits the calendar. |
+| `update_support_offer_fulfillment` | `supporter_person_id`; `offer_id`; `status`: `acknowledged` or `completed` | Challenge accepted-help ownership | Only the named active supporter who made an accepted offer can report handling or completion in the fictional build. It never edits the calendar; production must derive supporter identity from authentication. |
 | `apply_confirmed_change` | `commitment_id`; `start_at`; `end_at`; `confirmation_note`; `confirmation_verified: true` | Changes the household calendar | Only for a separately verified clinic confirmation. It rejects invalid time ranges and unverified requests. |
 | `apply_confirmed_cancellation` | `commitment_id`; `confirmation_note`; `confirmation_verified: true` | Marks the appointment cancelled | Requires a separately verified clinic confirmation and an existing `cancellation_requested` state. It preserves the appointment record and audit trail while removing it from active planning. |
 | `undo_last_change` | `user_confirmed: true` | Restores the previous local state | Requires confirmation. It cannot recall a real external email; approved external-style demo actions clear the older undo chain. |
@@ -438,7 +465,7 @@ Register a Google OAuth **Web application** with this exact callback:
 
 ```text
 http://localhost:5173/api/gmail/callback
-https://YOUR_PRODUCTION_DOMAIN/api/gmail/callback
+https://care-weave.vercel.app/api/gmail/callback
 ```
 
 Then set these server-only values locally and in Vercel:
@@ -446,7 +473,7 @@ Then set these server-only values locally and in Vercel:
 ```dotenv
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-GOOGLE_OAUTH_REDIRECT_URI=https://YOUR_PRODUCTION_DOMAIN/api/gmail/callback
+GOOGLE_OAUTH_REDIRECT_URI=https://care-weave.vercel.app/api/gmail/callback
 GMAIL_TOKEN_ENCRYPTION_KEY=at_least_32_random_characters
 ```
 
@@ -456,7 +483,7 @@ The client secret and encrypted refresh token are never available to browser Jav
 
 Current host availability and controls can change, so check the [official site-tools documentation](https://learn.chatgpt.com/docs/webmcp) first.
 
-1. Start CareWeave locally or open the deployed HTTPS URL.
+1. Start CareWeave locally or open [care-weave.vercel.app](https://care-weave.vercel.app/).
 2. Open the page in a compatible ChatGPT/Codex built-in browser.
 3. Inspect the browser’s available site tools and confirm that 32 tools are present.
 4. Ask: “What do I need to do today, and is tomorrow rushed?”
@@ -478,6 +505,7 @@ npm run test:e2e
 The automated suite covers:
 
 - 32-tool WebMCP registration, rollback on partial host failure, and shared visible state
+- The complete judge journey from day briefing and pacing through shared route focus to a reviewable request that leaves the confirmed appointment unchanged
 - Runtime schema validation and verified reschedule/cancellation reconciliation
 - Safe appointment drafting, approval, stale-plan rejection, and email deduplication
 - Freshness/offline truth, reminders, recurrence expansion, and calendar-integrity review
@@ -491,13 +519,15 @@ The automated suite covers:
 - WCAG AA text contrast and axe-core WCAG A/AA checks
 - Reduced motion, forced colours, 200% text reflow, and horizontal-overflow checks
 
-The latest local verification completed with zero Svelte diagnostics, 40 passing unit tests, 69 passing browser tests (36 deliberately skipped by device applicability), and a successful static production build.
+The current verification suite includes 41 unit tests. The latest browser run passed 100 applicable checks across iPad landscape, iPad portrait, and mobile layouts; 38 checks were deliberately skipped where they apply only to another viewport.
 
 ## Deployment
 
 ### Vercel
 
 The repository includes `vercel.json` and a Vercel Function for Realtime session creation.
+
+**Production deployment:** [https://care-weave.vercel.app/](https://care-weave.vercel.app/)
 
 1. Import the public repository into Vercel.
 2. Keep the configured build command `npm run build` and output directory `build`.
@@ -523,8 +553,8 @@ Equivalent serverless functions can be created for Cloudflare, AWS, or another p
 
 ## Install on an iPad
 
-1. Deploy CareWeave to an HTTPS URL.
-2. Open it in Safari on the iPad.
+1. Open [care-weave.vercel.app](https://care-weave.vercel.app/) in Safari on the iPad.
+2. Confirm the board loads and the layout matches the intended orientation.
 3. Choose **Share → Add to Home Screen**.
 4. Open the installed PWA and grant microphone permission only if conversational voice is configured.
 5. Use iPad Guided Access if the device will remain mounted as a household display.
@@ -592,7 +622,7 @@ Read the detailed [security and production-integration notes](docs/SECURITY.md).
 | Calendar | Local commitments | Provider adapters, idempotency keys, event-version checks, and reconciliation |
 | Sending | No send endpoint; local suggestions or Gmail drafts | Authenticated send workflow, delivery state, native confirmation, and server audit trail if sending is added |
 | Maps | OpenStreetMap tiles with fictional path | Contracted or self-hosted tiles, accessibility-aware routing, timestamps, and privacy policy |
-| Storage | Browser local storage | Encrypted server storage, retention controls, export/delete, backup, and device revocation |
+| Storage | Resettable, device-local fictional state shared with the agent in the same open page | Authenticated server storage, retention controls, export/delete, backup, and device revocation |
 | Voice | Realtime endpoint with touch-only approval | Authentication, rate limits, usage caps, abuse protection, consent logging, and monitoring |
 | Health data | Fictional appointment details | Jurisdiction-specific legal review, data-processing agreements, and strict access controls |
 
@@ -649,6 +679,8 @@ The complete under-three-minute walkthrough is in [`docs/DEMO_SCRIPT.md`](docs/D
 
 ## Further documentation
 
+- [Hackathon alignment and winning-path audit](docs/HACKATHON_ALIGNMENT_AUDIT.md)
+- [WebMCP task-level evaluation and production-host checklist](docs/WEBMCP_EVALS.md)
 - [Product and safety specification](docs/PRODUCT.md)
 - [Older-adult UX audit and repairs](docs/OLDER_ADULT_UX_AUDIT.md)
 - [50-user readiness and missing-capabilities audit](docs/50-USER-READINESS-AUDIT.md)

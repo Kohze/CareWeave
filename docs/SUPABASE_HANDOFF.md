@@ -1,5 +1,12 @@
 # CareWeave Supabase handoff
 
+> [!IMPORTANT]
+> This is a post-challenge production roadmap. Do not merge Supabase/Auth into
+> the judged submission branch before the hackathon. The current account-free,
+> fictional, device-local demo is intentional: it gives judges an immediate,
+> deterministic WebMCP path with no credentials or setup. Creating the project
+> and testing this migration separately is fine; integrate it after judging.
+
 This document is the setup contract for adding authenticated, cross-device
 synchronization to CareWeave. It is intentionally smaller than a fully
 normalized care platform: the existing, tested `AppData` document remains the
@@ -39,10 +46,10 @@ full household document visible to supporters or unauthenticated users.
 - Do not grant the database `anon` role access to household data. A Supabase
   anonymous Auth user is a unique authenticated user and is not the same as
   an unauthenticated request using the publishable key.
-- Configure Auth site URL as the production Vercel URL.
+- Configure the Auth Site URL as `https://care-weave.vercel.app`.
 - Add redirect URLs for:
   - `http://localhost:5173/auth/callback`
-  - `https://<production-domain>/auth/callback`
+  - `https://care-weave.vercel.app/auth/callback`
 - If reliable external testing is needed, configure custom SMTP. Supabase's
   default mail service should not be treated as production email delivery.
 

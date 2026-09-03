@@ -511,10 +511,16 @@
 
 <svelte:head>
 	<title>CareWeave — everyday care, woven together</title>
-	<meta name="description" content="A voice-first household dayboard for appointments, care, food and everyday plans." />
+	<meta name="description" content="CareWeave is a calm shared dayboard where older adults and WebMCP agents understand care plans, focus the same screen and prepare safe next steps together." />
+	<link rel="canonical" href="https://care-weave.vercel.app/" />
 	<meta property="og:title" content="CareWeave — everyday care, woven together" />
-	<meta property="og:description" content="A voice-first household dayboard for appointments, care, food, shopping and routes." />
+	<meta property="og:description" content="One calm shared care surface where people and WebMCP agents understand, focus and prepare together." />
 	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://care-weave.vercel.app/" />
+	<meta property="og:site_name" content="CareWeave" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="CareWeave — everyday care, woven together" />
+	<meta name="twitter:description" content="One calm shared care surface where people and WebMCP agents understand, focus and prepare together." />
 </svelte:head>
 
 <a class="skip-link" href="#main-content">Skip to today’s plan</a>

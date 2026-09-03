@@ -373,7 +373,7 @@ export function careWeaveTools(): CareWeaveToolDefinition[] {
 		},
 		{
 			name: 'suggest_support', title: 'Offer family support',
-			description: 'Create a non-binding offer of help from an active trusted supporter. The offer appears for the older adult to accept or decline. It does not change the calendar, contact a clinic, expose private notes, or imply consent.',
+			description: 'In the fictional challenge household, create a non-binding offer of help for a named active supporter. The offer appears for the older adult to accept or decline. It does not change the calendar, contact a clinic, expose private notes, or imply consent. A production adapter must derive supporter identity from authentication instead of trusting supporter_person_id.',
 			inputSchema: objectSchema({
 				supporter_person_id: idProperty,
 				category: { type: 'string', enum: ['appointment', 'shopping', 'transport', 'check_in'] },
@@ -389,19 +389,19 @@ export function careWeaveTools(): CareWeaveToolDefinition[] {
 		},
 		{
 			name: 'respond_to_help_request', title: 'Respond to an older adult help request',
-			description: 'For an authenticated trusted supporter, acknowledge responsibility for a help request or mark that help complete. Requires active respond-to-help permission and never changes a medical appointment.',
+			description: 'In the fictional challenge household, record that the named permitted supporter acknowledged a help request or completed the help. Requires active respond-to-help permission and never changes a medical appointment. A production adapter must derive supporter identity from authentication instead of trusting supporter_person_id.',
 			inputSchema: objectSchema({ supporter_person_id: idProperty, reminder_id: idProperty, response: { type: 'string', enum: ['acknowledged', 'completed'] } }, ['supporter_person_id', 'reminder_id', 'response']),
 			execute: async (input) => household.respondToHelpRequest(asString(input, 'supporter_person_id') ?? '', asString(input, 'reminder_id') ?? '', asString(input, 'response') as 'acknowledged' | 'completed')
 		},
 		{
 			name: 'record_care_visit_status', title: 'Record a care visit status',
-			description: 'For an authenticated carer assigned to a care commitment, record scheduled, checked-in, completed, late, or missed status with an observation time. It updates only shared visit status and never exposes professional care notes.',
+			description: 'In the fictional challenge household, record scheduled, checked-in, completed, late, or missed status for the named carer assigned to the visit. It updates only shared visit status and never exposes professional care notes. A production adapter must derive carer identity from authentication instead of trusting carer_person_id.',
 			inputSchema: objectSchema({ carer_person_id: idProperty, commitment_id: idProperty, status: { type: 'string', enum: ['scheduled', 'checked_in', 'completed', 'late', 'missed'] }, observed_at: { type: 'string', format: 'date-time' } }, ['carer_person_id', 'commitment_id', 'status', 'observed_at']),
 			execute: async (input) => household.recordCareVisitUpdate(asString(input, 'carer_person_id') ?? '', asString(input, 'commitment_id') ?? '', asString(input, 'status') as Parameters<typeof household.recordCareVisitUpdate>[2], asString(input, 'observed_at') ?? '')
 		},
 		{
 			name: 'update_support_offer_fulfillment', title: 'Update accepted family help',
-			description: 'For the trusted supporter who made an accepted offer, say they are handling it or that it is complete. This updates coordination state only and never edits the calendar.',
+			description: 'In the fictional challenge household, record that the named supporter who made an accepted offer is handling it or completed it. This updates coordination state only and never edits the calendar. A production adapter must derive supporter identity from authentication instead of trusting supporter_person_id.',
 			inputSchema: objectSchema({ supporter_person_id: idProperty, offer_id: idProperty, status: { type: 'string', enum: ['acknowledged', 'completed'] } }, ['supporter_person_id', 'offer_id', 'status']),
 			execute: async (input) => household.updateSupportOfferFulfillment(asString(input, 'supporter_person_id') ?? '', asString(input, 'offer_id') ?? '', asString(input, 'status') as 'acknowledged' | 'completed')
 		},

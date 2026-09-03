@@ -1,7 +1,7 @@
 {
   "name": "CareWeave — everyday care, woven together",
   "short_name": "CareWeave",
-  "description": "A calm, agent-compatible home dayboard for everyday commitments.",
+  "description": "A calm shared care dayboard where people and WebMCP agents understand, focus and prepare together.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -1,6 +1,9 @@
 {
   "name": "careweave-webmcp",
   "version": "0.1.0",
+  "description": "A calm shared care dayboard where people and WebMCP agents understand, focus, and prepare together.",
+  "homepage": "https://care-weave.vercel.app/",
+  "repository": "https://github.com/Kohze/CareWeave.git",
   "private": true,
   "type": "module",
   "scripts": {
