@@ -57,8 +57,8 @@
 			<span class="support-status-icon"><Icon name={overview.status === 'on_track' ? 'check' : 'help'} size={31} /></span>
 			<div>
 				<span class="eyebrow">Today · {formatDay(date)}</span>
-				<h2>{overview.status === 'on_track' ? 'Today is on track' : 'Something may need help'}</h2>
-				<p>{overview.statusSummary}</p>
+				<h2>{overview.status === 'on_track' ? 'Shared care looks on track' : 'Something may need help'}</h2>
+				<p>{overview.status === 'on_track' ? 'Based on the care-visit and food information shared with you. Private decisions are not included.' : overview.statusSummary}</p>
 			</div>
 			<FreshnessStrip overview={overview.dataFreshness} compact />
 		</section>

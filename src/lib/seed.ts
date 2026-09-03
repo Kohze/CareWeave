@@ -130,7 +130,7 @@ export function createSeedData(): AppData {
 				summary: 'KindCare says Elena may arrive at 09:00 instead of 08:30.',
 				requestedAction: 'Confirm whether 09:00 is all right',
 				confidence: 'high',
-				status: 'new',
+				status: 'resolved',
 				sourceId: 'mail-carer',
 				relatedCommitmentId: 'event-carer',
 				createdAt: now
@@ -203,7 +203,7 @@ export function createSeedData(): AppData {
 		outbox: [],
 		activity: [
 			{ id: 'activity-ready', type: 'system', label: 'CareWeave is ready', detail: 'Demo household loaded safely.', createdAt: now },
-			{ id: 'activity-mail', type: 'mail_scan', label: 'Mailbox checked', detail: '2 items need attention.', createdAt: now }
+			{ id: 'activity-mail', type: 'mail_scan', label: 'Mailbox checked', detail: '2 messages checked; 1 still needs attention.', createdAt: now }
 		],
 		preferences: {
 			ownerName: '',

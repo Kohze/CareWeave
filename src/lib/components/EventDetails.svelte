@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { formatDay, formatTime } from '../dates';
-	import type { Commitment, Person, Place, Reminder, SourceMessage } from '../types';
+	import type { CareVisitUpdate, Commitment, Person, Place, Reminder, SourceMessage } from '../types';
 	import Icon from './Icon.svelte';
 	import ReminderControls from './ReminderControls.svelte';
 
@@ -10,6 +10,7 @@
 		participants,
 		sources,
 		reminder,
+		careVisitUpdate,
 		onClose,
 		showClose = true,
 		onTogglePrep,
@@ -22,6 +23,7 @@
 		participants: Person[];
 		sources: SourceMessage[];
 		reminder?: Reminder;
+		careVisitUpdate?: CareVisitUpdate;
 		onClose: () => void;
 		showClose?: boolean;
 		onTogglePrep: (prepId: string) => void;
@@ -54,6 +56,16 @@
 
 	function senderName(from: string): string {
 		return from.replace(/\s*<.*>$/, '');
+	}
+
+	function careStatusLabel(status: CareVisitUpdate['status']): string {
+		return ({
+			scheduled: 'Visit scheduled',
+			checked_in: 'Elena has arrived',
+			completed: 'Visit completed',
+			late: 'Visit is running late',
+			missed: 'Visit may have been missed'
+		})[status];
 	}
 </script>
 
@@ -96,7 +108,11 @@
 		{/if}
 	</dl>
 
-	<p class="confirmation-line"><Icon name="shield" size={20} /><span><strong>{item.status.replaceAll('_', ' ')}</strong>{item.status === 'confirmed' ? ' — this time is in your calendar.' : ' — the original time stays here until a reply confirms otherwise.'}</span></p>
+	{#if item.kind === 'care' && careVisitUpdate}
+		<p class="confirmation-line"><Icon name="shield" size={20} /><span><strong>{careStatusLabel(careVisitUpdate.status)}</strong> — updated at {formatTime(careVisitUpdate.updatedAt, item.timeZone)}.</span></p>
+	{:else}
+		<p class="confirmation-line"><Icon name="shield" size={20} /><span><strong>{item.status.replaceAll('_', ' ')}</strong>{item.status === 'confirmed' ? ' — this time is in your calendar.' : ' — the original time stays here until a reply confirms otherwise.'}</span></p>
+	{/if}
 
 	{#if reminder}
 		<ReminderControls {reminder} onDone={() => onReminder('done')} onLater={() => onReminder('snooze')} onHelp={() => onReminder('need_help')} />

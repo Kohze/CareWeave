@@ -52,7 +52,7 @@
 			if (frame % 4 === 0) canvas.dataset.frame = String(frame);
 			animationFrame = requestAnimationFrame(markFrame);
 		};
-		animationFrame = requestAnimationFrame(markFrame);
+		if (!reducedMotion) animationFrame = requestAnimationFrame(markFrame);
 
 		return () => {
 			active = false;
@@ -190,4 +190,12 @@
 	@keyframes rain-fall { from { background-position: 0 -190px; } to { background-position: -42px 190px; } }
 	@keyframes snow-fall { from { background-position: 0 -118px, 43px -24px; } to { background-position: 45px 118px, 8px 158px; } }
 	@keyframes lightning-flash { 0%, 72%, 75%, 79%, 100% { opacity: 0; } 73%, 77% { opacity: .78; } }
+	@media (prefers-reduced-motion: reduce) {
+		.weather-fallback,
+		.sky-glow,
+		.cloud-layer,
+		.weather-particles,
+		.lightning-glow,
+		canvas { animation: none !important; transition: none !important; }
+	}
 </style>

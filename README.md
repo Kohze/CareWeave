@@ -171,11 +171,11 @@ WebMCP operates on the same open CareWeave page as the person, so a remote datab
 - Visible current, delayed, and offline state on the dayboard and family view
 - Reminder actions limited to **Done**, **Remind me later**, and **I need help**
 - Recurring-series, named-time-zone, provider-version, conflict, and duplicate-review support below the simple UI
-- One-tap privacy screen with a forecast-driven animated sky, local clock, and next event
+- One-tap privacy screen with a forecast-driven sky and local clock; schedule and personal details are removed from the visible and accessibility trees
 - No-key weather data through a same-origin Open-Meteo proxy; only approximate coordinates are shared
 - MIT-licensed animated SVG weather artwork from [Meteocons](https://github.com/basmilius/meteocons), bundled locally rather than loaded from a third-party CDN
 - Urgent-help handoff that explicitly does not claim emergency monitoring
-- Guided display and per-card read-aloud preferences without adding another everyday tab
+- A true Guided display that reduces the day to one clear next step, plus per-card read-aloud preferences without adding another everyday tab
 
 ### Conversational voice
 

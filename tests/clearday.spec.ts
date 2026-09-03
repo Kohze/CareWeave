@@ -57,8 +57,13 @@ test('renders the touch-first dayboard and switches views', async ({ page }) => 
 	await expect(page.locator('.today-column .freshness-strip')).toHaveCount(0);
 	await expect(page.getByText(/saved local forecast|live local forecast|forecast preview/i)).toHaveCount(0);
 	await expect(page.getByText("Next in today's plan", { exact: true })).toHaveCount(0);
-	await expect(page.locator('.timeline .event-card.selected')).toHaveCount(1);
-	await expect(page.locator('.right-rail .detail-panel')).toBeVisible();
+	const selected = page.locator('.timeline .event-card.selected');
+	if (await selected.count()) {
+		expect(new Date((await selected.getAttribute('data-start-at'))!).getTime()).toBeGreaterThanOrEqual(Date.now() - 2_000);
+		await expect(page.locator('.right-rail .detail-panel')).toBeVisible();
+	} else {
+		await expect(page.locator('.right-rail').getByRole('heading', { name: 'Today is finished' })).toBeVisible();
+	}
 	await page.getByRole('button', { name: 'Food', exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Food at home' })).toBeVisible();
 	await expect(page.getByText('Milk', { exact: true })).toBeVisible();
@@ -380,7 +385,15 @@ test('shows a complete approval preview before saving a suggested message locall
 	await expect(dialog).toBeVisible();
 	await expect(dialog.getByText('reception@greenlane.example', { exact: true })).toBeVisible();
 	await expect(page.getByText(/appointment remains at its current time/i)).toBeVisible();
+	const reviewFit = await dialog.evaluate((node) => {
+		const title = node.querySelector('h2')!.getBoundingClientRect();
+		const actions = node.querySelector('.dialog-actions')!.getBoundingClientRect();
+		return { titleTop: title.top, actionsBottom: actions.bottom, viewportHeight: innerHeight };
+	});
+	expect(reviewFit.titleTop).toBeGreaterThanOrEqual(0);
+	expect(reviewFit.actionsBottom).toBeLessThanOrEqual(reviewFit.viewportHeight);
 	if ((await page.viewportSize())?.width === 1024) await page.screenshot({ path: 'artifacts/audit-final-review-dialog.png' });
+	if ((await page.viewportSize())?.width === 390) await page.screenshot({ path: 'artifacts/audit-final-review-dialog-mobile.png' });
 	await page.getByRole('button', { name: 'Save suggested message' }).click();
 	await expect(page.getByText('change requested', { exact: true })).not.toBeVisible();
 });
@@ -451,7 +464,8 @@ test('lets a trusted relative offer help while the account owner keeps control',
 	await page.getByRole('button', { name: 'Support', exact: true }).click();
 	await waitForViewToSettle(page, '.support-column');
 	await expect(page.getByRole('heading', { name: 'Family support' })).toBeVisible();
-	await expect(page.getByRole('heading', { name: 'Today is on track' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Shared care looks on track' })).toBeVisible();
+	await expect(page.getByText(/Private decisions are not included/i)).toBeVisible();
 	await expect(page.getByText('Completed', { exact: true })).toBeVisible();
 	await expect(page.getByText(/Message contents, medical notes and detailed care notes are not shown/i)).toBeVisible();
 
@@ -485,7 +499,7 @@ test('keeps the saved fictional board usable offline without demo warnings', asy
 test('connects reminder acknowledgement to a supporter response', async ({ page }) => {
 	const lunch = page.getByRole('article', { name: /Lunch/ });
 	await lunch.getByRole('button').first().click();
-	await expect(page.getByText('Lunch is ready in the fridge', { exact: true })).toBeVisible();
+	await expect(page.getByLabel('Helpful details').getByText('Lunch is ready in the fridge', { exact: true })).toBeVisible();
 	await page.getByRole('button', { name: 'I need help' }).click();
 	await expect(page.getByText(/support circle can see that you asked/i)).toBeVisible();
 	await page.getByRole('button', { name: 'Support', exact: true }).click();
@@ -495,6 +509,30 @@ test('connects reminder acknowledgement to a supporter response', async ({ page 
 	await page.getByRole('button', { name: 'Open main board' }).click();
 	await lunch.getByRole('button').first().click();
 	await expect(page.getByText(/trusted supporter has said they are helping/i)).toBeVisible();
+});
+
+test('opens reminder choices directly from the day summary', async ({ page }, testInfo) => {
+	test.skip(testInfo.project.name !== 'ipad-landscape', 'The fourth summary tile is intentionally folded into event details on narrower screens.');
+	await page.getByRole('button', { name: /Lunch is ready in the fridge/ }).click();
+	const reminder = page.getByRole('dialog', { name: 'Lunch' });
+	await expect(reminder).toBeVisible();
+	await expect(reminder.getByRole('button', { name: 'Done' })).toBeVisible();
+	await expect(reminder.getByRole('button', { name: 'Remind me later' })).toBeVisible();
+	await expect(reminder.getByRole('button', { name: 'I need help' })).toBeVisible();
+	await page.screenshot({ path: 'artifacts/audit-final-reminder-sheet.png' });
+	await reminder.getByRole('button', { name: 'Back to my day' }).click();
+});
+
+test('guided mode reduces the day to one clear next step', async ({ page }, testInfo) => {
+	test.skip(testInfo.project.name !== 'ipad-landscape', 'The focused mode is visually audited at the primary iPad viewport.');
+	await page.getByRole('button', { name: 'Next day' }).click();
+	await page.getByRole('button', { name: 'Open display settings' }).click();
+	await page.getByRole('button', { name: /Guided/ }).click();
+	await page.getByRole('button', { name: 'Close display settings' }).click();
+	await expect(page.getByRole('heading', { name: 'Next: Appointment with Dr Patel' })).toBeVisible();
+	await expect(page.locator('.timeline .event-card')).toHaveCount(1);
+	await expect(page.getByRole('button', { name: 'Show full day' })).toBeVisible();
+	await page.screenshot({ path: 'artifacts/audit-final-guided-mode.png' });
 });
 
 test('keeps support invitations and disclosure choices outside everyday navigation', async ({ page }) => {
@@ -529,14 +567,15 @@ test('can quickly hide private wall-screen information', async ({ page }) => {
 	const cover = page.getByRole('dialog', { name: /details are hidden/ });
 	await expect(cover).toBeVisible();
 	await expect(page.locator('.app-shell')).toHaveAttribute('aria-hidden', 'true');
-	await expect(cover.getByRole('region', { name: 'Next event' })).toBeVisible();
+	await expect(cover.getByText('Schedule and personal details stay out of sight.')).toBeVisible();
+	await expect(cover.getByText(/Appointment with Dr Patel|Green Lane Clinic|Elena visits/)).toHaveCount(0);
 	await expect(cover.getByRole('button', { name: 'Pause motion' })).toHaveCount(0);
 	await expect(cover.locator('.screensaver-mark')).toHaveCount(0);
 	await cover.getByRole('button', { name: 'Show main board' }).click();
 	await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
 });
 
-test('animates the forecast while the privacy screen is active', async ({ page }) => {
+test('keeps the privacy forecast still when reduced motion is requested', async ({ page }) => {
 	test.setTimeout(45_000);
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	await page.getByRole('button', { name: 'Start privacy screensaver' }).click();
@@ -545,5 +584,6 @@ test('animates the forecast while the privacy screen is active', async ({ page }
 	const before = Number(await sky.getAttribute('data-frame'));
 	await page.waitForTimeout(500);
 	const after = Number(await sky.getAttribute('data-frame'));
-	expect(after).toBeGreaterThan(before);
+	expect(after).toBe(before);
+	expect(await page.locator('.cloud-layer').first().evaluate((node) => getComputedStyle(node).animationName)).toBe('none');
 });

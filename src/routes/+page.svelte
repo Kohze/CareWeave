@@ -7,7 +7,7 @@
 	import { CareWeaveRealtimeVoice, resultSummary, type VoiceStatus } from '$lib/realtime';
 	import { createGmailDraft, disconnectGmail, getGmailStatus, listGmailMessages, type GmailConnectionStatus } from '$lib/gmail';
 	import { registerCareWeaveTools, toolInventory, unregisterCareWeaveTools, webMcpStatus } from '$lib/webmcp';
-	import type { ActionPlan, AppView, Reminder, SupportOfferCategory, SupportPermission, ToolResult } from '$lib/types';
+	import type { ActionPlan, AppView, CareVisitUpdate, Commitment, Reminder, SupportOfferCategory, SupportPermission, ToolResult } from '$lib/types';
 	import EventCard from '$lib/components/EventCard.svelte';
 	import EventDetails from '$lib/components/EventDetails.svelte';
 	import DisplaySheet from '$lib/components/DisplaySheet.svelte';
@@ -18,6 +18,7 @@
 	import SupportSetupSheet from '$lib/components/SupportSetupSheet.svelte';
 	import HelpSheet from '$lib/components/HelpSheet.svelte';
 	import PrivacyCover from '$lib/components/PrivacyCover.svelte';
+	import ReminderSheet from '$lib/components/ReminderSheet.svelte';
 	import VoiceSheet from '$lib/components/VoiceSheet.svelte';
 	import WeatherGlyph from '$lib/components/WeatherGlyph.svelte';
 	import WeatherForecastSheet from '$lib/components/WeatherForecastSheet.svelte';
@@ -28,6 +29,7 @@
 	let helpOpen = $state(false);
 	let privacyOpen = $state(false);
 	let weatherOpen = $state(false);
+	let activeReminderId = $state<string>();
 	let selectedSupporterId = $state('person-sam');
 	let voiceSupported = $state(false);
 	let voiceStatus = $state<VoiceStatus>('idle');
@@ -123,6 +125,8 @@
 	let newAttention = $derived($household.attentionItems.filter((item) => item.status === 'new'));
 	let selectedItem = $derived(dayItems.find((item) => item.id === $ui.selectedCommitmentId) ?? $household.commitments.find((item) => item.id === baseCommitmentId($ui.selectedCommitmentId ?? '')));
 	let activeReminders = $derived($household.reminders.filter((reminder) => reminder.status !== 'done'));
+	let activeReminder = $derived($household.reminders.find((reminder) => reminder.id === activeReminderId));
+	let activeReminderItem = $derived($household.commitments.find((item) => item.id === activeReminder?.commitmentId));
 	let activePlan = $derived($household.plans.find((plan) => plan.id === $ui.activePlanId && plan.status === 'draft'));
 	let activeRoute = $derived($ui.showRouteForId ? routeForCommitment($household, $ui.showRouteForId) : undefined);
 	const weekStartDate = localDateKey();
@@ -133,31 +137,42 @@
 			.filter((item) => item.status !== 'cancelled' && item.status !== 'completed')
 			.sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime());
 		if (selectedDate === localDateKey()) {
-			return availableItems.find((item) => new Date(item.startAt).getTime() >= Date.now()) ?? availableItems[0];
+			return availableItems.find((item) => new Date(item.startAt).getTime() >= Date.now());
 		}
 		return availableItems[0];
 	});
+	let nextFutureItem = $derived.by(() => {
+		const dates = Array.from({ length: 31 }, (_, index) => addDays(localDateKey(), index));
+		return dates
+			.flatMap((date) => commitmentsForDate($household, date))
+			.filter((item) => item.status !== 'cancelled' && item.status !== 'completed' && new Date(item.startAt).getTime() >= Date.now())
+			.sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime())[0];
+	});
+	let visibleDayItems = $derived($household.preferences.guidedMode ? (upcomingDayItem ? [upcomingDayItem] : []) : dayItems);
+	let guidedFocusItem = $derived(upcomingDayItem ?? (selectedDate === localDateKey() ? nextFutureItem : undefined));
 	let displayedDetailItem = $derived(selectedItem ?? upcomingDayItem);
 	let selectedReminder = $derived($household.reminders.find((reminder) => reminder.commitmentId === baseCommitmentId(displayedDetailItem?.id ?? '')));
 	let privacyLocation = $derived.by(() => {
 		const home = $household.places.find((place) => place.id === $household.preferences.homePlaceId);
 		return home ? { latitude: home.latitude, longitude: home.longitude } : { latitude: 51.51, longitude: -0.13 };
 	});
-	let nextPrivacyEvent = $derived.by(() => {
-		const dates = Array.from({ length: 31 }, (_, index) => addDays(localDateKey(), index));
-		const item = dates
-			.flatMap((date) => commitmentsForDate($household, date))
-			.filter((candidate) => candidate.status !== 'cancelled' && candidate.status !== 'completed' && new Date(candidate.startAt).getTime() >= Date.now())
-			.sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime())[0];
-		if (!item) return undefined;
-		const place = item.locationId ? $household.places.find((candidate) => candidate.id === item.locationId) : undefined;
-		return { title: item.title, startAt: item.startAt, timeZone: item.timeZone, location: place?.shortAddress ?? (item.kind === 'care' || item.kind === 'food' ? 'At home' : undefined) };
-	});
+
+	function careVisitUpdateFor(item: Commitment): CareVisitUpdate | undefined {
+		if (item.kind !== 'care') return undefined;
+		return $household.careVisitUpdates.find((update) =>
+			update.commitmentId === baseCommitmentId(item.id) && update.updatedAt.slice(0, 10) === item.startAt.slice(0, 10)
+		);
+	}
 
 	function selectCommitment(id: string): void {
 		const item = dayItems.find((candidate) => candidate.id === id) ?? $household.commitments.find((candidate) => candidate.id === baseCommitmentId(id));
 		ui.update((value) => ({ ...value, selectedCommitmentId: id, showRouteForId: undefined, announcement: item ? `Details opened for ${item.title}.` : 'Plan details opened.' }));
 		if (item && $household.preferences.readAloud) speak(`${item.title}. ${formatTime(item.startAt, item.timeZone)}. ${item.notes ?? ''}`);
+	}
+
+	function openCommitment(item: Commitment): void {
+		if (item.startAt.slice(0, 10) !== selectedDate) focusDay(item.startAt.slice(0, 10));
+		selectCommitment(item.id);
 	}
 
 	function focusDay(date: string): void {
@@ -375,6 +390,7 @@
 		if (!item) return;
 		household.focusDate(item.startAt.slice(0, 10));
 		selectCommitment(item.id);
+		activeReminderId = reminder.id;
 	}
 
 	function resetDemo(): void {
@@ -561,7 +577,7 @@
 				title={$webMcpStatus.message}
 			>
 				<span aria-hidden="true"></span>
-				<span><strong>WebMCP</strong><small>{$webMcpStatus.state === 'connected' ? `${$webMcpStatus.registered} tools connected` : $webMcpStatus.state === 'error' ? 'Connection failed' : `${webMcpToolCount} tools ready`}</small></span>
+				<span><strong>Assistant ready</strong><small>{$webMcpStatus.state === 'connected' ? `WebMCP · ${$webMcpStatus.registered} tools connected` : $webMcpStatus.state === 'error' ? 'WebMCP unavailable' : `WebMCP · ${webMcpToolCount} tools ready`}</small></span>
 			</div>
 			<button class="display-button" onclick={() => displayOpen = true} aria-label="Open display settings"><span>Aa</span><strong>Display</strong></button>
 			<button class="privacy-button" onclick={() => privacyOpen = true} aria-label="Start privacy screensaver"><Icon name="shield" size={20} /><strong>Hide</strong></button>
@@ -584,30 +600,51 @@
 						</div>
 				</section>
 
+				{#if $household.preferences.guidedMode}
+					<section class="guided-brief" aria-labelledby="guided-brief-title">
+						<span class="guided-brief-icon"><Icon name={guidedFocusItem ? (guidedFocusItem.kind === 'health' ? 'heart' : guidedFocusItem.kind === 'food' ? 'basket' : guidedFocusItem.kind === 'care' ? 'care-visit' : 'calendar') : 'sun'} size={31} /></span>
+						<div>
+							<span class="eyebrow">One step at a time</span>
+							<h2 id="guided-brief-title">{upcomingDayItem ? `Next: ${upcomingDayItem.title}` : selectedDate === localDateKey() ? 'Today is finished' : guidedFocusItem ? guidedFocusItem.title : 'A calm day'}</h2>
+							{#if guidedFocusItem}
+								<p>{guidedFocusItem === nextFutureItem && !upcomingDayItem ? `Your next plan is ${formatDay(guidedFocusItem.startAt.slice(0, 10))} at ${formatTime(guidedFocusItem.startAt, guidedFocusItem.timeZone)}.` : `${formatTime(guidedFocusItem.startAt, guidedFocusItem.timeZone)} · ${$household.places.find((place) => place.id === guidedFocusItem?.locationId)?.shortAddress ?? 'At home'}`}</p>
+							{:else}<p>There is nothing you need to be somewhere for.</p>{/if}
+						</div>
+						<div class="guided-brief-actions">
+							{#if guidedFocusItem}<button class="primary-button" onclick={() => openCommitment(guidedFocusItem!)}>Show this plan</button>{/if}
+							<button class="secondary-button" onclick={() => household.setDisplay({ guidedMode: false })}>Show full day</button>
+						</div>
+					</section>
+				{:else}
 				<section class="glance-grid" aria-label="At a glance">
 					<button class={`week-forecast-summary today-forecast-summary weather-${selectedDayForecast.condition}`} aria-haspopup="dialog" aria-label={`Open hourly forecast for ${selectedDate === localDateKey() ? 'today' : formatDay(selectedDate)}`} onclick={() => weatherOpen = true}>
 						<span class="week-forecast-icon"><WeatherGlyph condition={selectedDayForecast.condition} size={54} /></span>
-						<span><strong>{selectedDayForecast.label}{selectedDayForecast.temperature !== undefined ? ` · ${selectedDayForecast.temperature}°` : ''}</strong><em>{selectedDayForecast.high !== undefined && selectedDayForecast.low !== undefined ? `High ${Math.round(selectedDayForecast.high)}° · Low ${Math.round(selectedDayForecast.low)}°` : 'Weather updates automatically'}{selectedDayForecast.precipitationProbability !== undefined ? ` · ${Math.round(selectedDayForecast.precipitationProbability)}% rain` : ''}</em></span>
-						<span class="weather-open-label">Hourly <Icon name="arrow" size={18} /></span>
+						<span class="forecast-copy"><strong>{selectedDayForecast.label}{selectedDayForecast.temperature !== undefined ? ` · ${selectedDayForecast.temperature}°` : ''}</strong><em>{selectedDayForecast.high !== undefined && selectedDayForecast.low !== undefined ? `High ${Math.round(selectedDayForecast.high)}° · Low ${Math.round(selectedDayForecast.low)}°` : 'Weather updates automatically'}{selectedDayForecast.precipitationProbability !== undefined ? ` · ${Math.round(selectedDayForecast.precipitationProbability)}% rain` : ''}</em></span>
+						<span class="weather-open-label" aria-hidden="true"><Icon name="arrow" size={18} /></span>
 					</button>
 						<button class="glance attention-glance" onclick={() => goToView('attention')}>
-							<span class="glance-icon"><Icon name="mail" size={25} /></span><span><strong>{newAttention.length} {newAttention.length === 1 ? 'thing' : 'things'}</strong><small>need your attention</small></span><Icon name="arrow" size={21} />
+							<span class="glance-icon"><Icon name="mail" size={25} /></span><span><strong>{newAttention[0]?.title ?? 'Nothing waiting'}</strong><small>{newAttention.length ? `${newAttention.length} ${newAttention.length === 1 ? 'decision' : 'decisions'} to review` : 'Everything is reviewed'}</small></span><Icon name="arrow" size={21} />
 						</button>
 						<button class="glance food-glance" onclick={() => goToView('food')}>
 							<span class="glance-icon"><Icon name="basket" size={25} /></span><span><strong>Food for {$household.food.daysCovered} days</strong><small>shop by {formatDay($household.food.nextShoppingBy, 'short')}</small></span><Icon name="arrow" size={21} />
 						</button>
-						<button class="glance safe-glance" onclick={() => activeReminders[0] && openReminder(activeReminders[0])}><span class="glance-icon"><Icon name="clock" size={25} /></span><span><strong>{activeReminders.length} {activeReminders.length === 1 ? 'reminder' : 'reminders'}</strong><small>{activeReminders.some((reminder) => reminder.status === 'help_requested') ? 'waiting for help' : 'done, later, or ask for help'}</small></span><Icon name="arrow" size={21} /></button>
+						<button class="glance safe-glance" onclick={() => activeReminders[0] && openReminder(activeReminders[0])}><span class="glance-icon"><Icon name="clock" size={25} /></span><span><strong>{activeReminders[0]?.label ?? 'No reminders due'}</strong><small>{activeReminders.some((reminder) => reminder.status === 'help_requested') ? 'Someone has been asked to help' : activeReminders.length ? `${activeReminders.length} ${activeReminders.length === 1 ? 'reminder' : 'reminders'} · tap to respond` : 'Nothing needs a response'}</small></span><Icon name="arrow" size={21} /></button>
 				</section>
+				{/if}
 
 				<div class="day-layout" class:route-active={!!activeRoute} class:details-active={!!displayedDetailItem && !activeRoute}>
 					<section class="timeline-section" aria-labelledby="timeline-title">
-						<div class="section-heading"><div><span class="eyebrow">{formatDay(selectedDate)}</span><h2 id="timeline-title">What’s happening</h2></div><span>{dayItems.length} planned</span></div>
-						<div class="timeline" class:empty={dayItems.length === 0}>
-							{#if dayItems.length === 0}
+						<div class="section-heading"><div><span class="eyebrow">{formatDay(selectedDate)}</span><h2 id="timeline-title">What’s happening</h2></div><span>{$household.preferences.guidedMode ? `${visibleDayItems.length} shown` : `${dayItems.length} planned`}</span></div>
+						<div class="timeline" class:empty={visibleDayItems.length === 0}>
+							{#if visibleDayItems.length === 0}
+								{#if selectedDate === localDateKey() && dayItems.length}
+									<div class="empty-state"><Icon name="check" size={35} /><h3>Today is finished</h3><p>Your planned items for today have passed.</p></div>
+								{:else}
 								<div class="empty-state"><Icon name="sun" size={35} /><h3>A calm day</h3><p>There is nothing you need to be somewhere for.</p></div>
+								{/if}
 							{:else}
-								{#each dayItems as item (item.id)}
-									<EventCard {item} reminder={$household.reminders.find((reminder) => reminder.commitmentId === baseCommitmentId(item.id))} place={$household.places.find((place) => place.id === item.locationId)} highlighted={$ui.highlightedCommitmentIds.includes(item.id)} selected={displayedDetailItem?.id === item.id && !$ui.showRouteForId} onSelect={() => selectCommitment(item.id)} onRoute={() => showRoute(item.id)} onRequest={() => requestAppointment(baseCommitmentId(item.id))} />
+								{#each visibleDayItems as item (item.id)}
+									<EventCard {item} careVisitUpdate={careVisitUpdateFor(item)} reminder={$household.reminders.find((reminder) => reminder.commitmentId === baseCommitmentId(item.id))} place={$household.places.find((place) => place.id === item.locationId)} highlighted={$ui.highlightedCommitmentIds.includes(item.id)} selected={displayedDetailItem?.id === item.id && !$ui.showRouteForId} onSelect={() => selectCommitment(item.id)} onRoute={() => showRoute(item.id)} onRequest={() => requestAppointment(baseCommitmentId(item.id))} />
 								{/each}
 							{/if}
 						</div>
@@ -623,6 +660,7 @@
 								participants={$household.people.filter((person) => displayedDetailItem?.participantIds.includes(person.id))}
 								sources={$household.sources.filter((source) => displayedDetailItem?.sourceIds.includes(source.id))}
 								reminder={selectedReminder}
+								careVisitUpdate={careVisitUpdateFor(displayedDetailItem)}
 								onClose={closeSidePanel}
 								showClose={Boolean(selectedItem)}
 								onTogglePrep={(prepId) => household.togglePrep(baseCommitmentId(displayedDetailItem!.id), prepId)}
@@ -632,7 +670,13 @@
 							/>
 						{:else}
 							<section class="detail-panel empty-day-detail">
-								<div class="detail-about"><h2>A calm day</h2><p>There are no active plans to show for this day.</p></div>
+								<div class="detail-about">
+									<h2>{selectedDate === localDateKey() && dayItems.length ? 'Today is finished' : 'A calm day'}</h2>
+									<p>{selectedDate === localDateKey() && dayItems.length ? 'Everything planned for today has passed.' : 'There are no active plans to show for this day.'}</p>
+									{#if selectedDate === localDateKey() && nextFutureItem}
+										<div class="next-plan-card"><span class="eyebrow">Next plan</span><strong>{nextFutureItem.title}</strong><span>{formatDay(nextFutureItem.startAt.slice(0, 10))} at {formatTime(nextFutureItem.startAt, nextFutureItem.timeZone)}</span><button class="primary-button" onclick={() => openCommitment(nextFutureItem!)}>Show next plan</button></div>
+									{/if}
+								</div>
 							</section>
 						{/if}
 					</aside>
@@ -729,5 +773,6 @@
 {#if displayOpen}<DisplaySheet textSize={$household.preferences.textSize} contrast={$household.preferences.contrast} guidedMode={$household.preferences.guidedMode} readAloud={$household.preferences.readAloud} onTextSize={(textSize) => household.setDisplay({ textSize })} onContrast={(contrast) => household.setDisplay({ contrast })} onGuidedMode={(guidedMode) => household.setDisplay({ guidedMode })} onReadAloud={(readAloud) => household.setDisplay({ readAloud })} onClose={() => displayOpen = false} />{/if}
 {#if supportSetupOpen}<SupportSetupSheet data={$household} onInvite={inviteSupporter} onUpdate={(personId, input) => household.updateSupportAccess(personId, input)} onPreview={(personId) => { selectedSupporterId = personId; supportSetupOpen = false; household.setView('support'); }} onClose={() => supportSetupOpen = false} />{/if}
 {#if helpOpen}<HelpSheet supporterName={primarySupporter?.name} supporterPhone={primarySupporter?.phone} onClose={() => helpOpen = false} />{/if}
-{#if privacyOpen}<PrivacyCover ownerName={$household.preferences.ownerName} nextEvent={nextPrivacyEvent} location={privacyLocation} onUnlock={() => privacyOpen = false} />{/if}
+{#if privacyOpen}<PrivacyCover ownerName={$household.preferences.ownerName} location={privacyLocation} onUnlock={() => privacyOpen = false} />{/if}
 {#if weatherOpen}<WeatherForecastSheet date={selectedDate} forecast={selectedDayForecast} hours={boardForecast.hourly ?? []} onClose={() => weatherOpen = false} />{/if}
+{#if activeReminder && activeReminderItem}<ReminderSheet reminder={activeReminder} item={activeReminderItem} onResponse={(response) => household.respondToReminder(activeReminder!.id, response)} onClose={() => activeReminderId = undefined} />{/if}

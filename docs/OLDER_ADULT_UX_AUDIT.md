@@ -59,7 +59,7 @@ Before positioning this as production assistive technology, run moderated sessio
 
 A second pass tested the full interface with axe-core, added portrait-iPad coverage, and repeated the most important interactions after hydration. It found and repaired issues that the initial metrics did not catch:
 
-- The visible header exposed implementation status instead of user trust. It now says “Fictional demo” and “No real messages sent”; WebMCP details remain available only as diagnostic help text.
+- The visible header leads with user trust: “Fictional demo”, “No real messages sent”, and “Assistant ready”. WebMCP remains visible as secondary evidence for judges rather than the primary product label.
 - “Confidence”, “protected review”, and “approve this plan” were system language. The interface now says where information came from, what needs review, and what the user is actually saving.
 - “Your week” was a rolling seven-day period, not a calendar week. It is now accurately called “Next 7 days”.
 - Seven narrow landscape columns split appointment names mid-word. The layout is now four readable day cards above three wider cards. Portrait uses two columns; phones use one.

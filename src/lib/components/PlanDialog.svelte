@@ -11,7 +11,8 @@
 
 	onMount(() => {
 		dialog.showModal();
-		safeButton.focus();
+		safeButton.focus({ preventScroll: true });
+		dialog.scrollTop = 0;
 	});
 
 	function discard(): void {
@@ -40,11 +41,14 @@
 </script>
 
 <dialog bind:this={dialog} class="plan-dialog" aria-labelledby="plan-title" aria-describedby="plan-lead" oncancel={(event) => { event.preventDefault(); discard(); }}>
+	<div class="plan-dialog-header">
 		<div class="dialog-icon"><Icon name="shield" size={30} /></div>
 		<span class="eyebrow">Review before anything happens</span>
 		<h2 id="plan-title">{plan.title}</h2>
 		<p class="dialog-lead" id="plan-lead">Nothing has been sent yet. Check each detail below.</p>
+	</div>
 
+	<div class="plan-dialog-content">
 		{#if email}
 			<div class="email-preview">
 				<div><span>To</span><strong>{String(email.payload.to)}</strong></div>
@@ -58,8 +62,9 @@
 		</ul>
 		{#each plan.warnings as warning}<p class="warning"><strong>Important:</strong> {warning}</p>{/each}
 		{#if error}<p class="dialog-error" role="alert"><strong>Nothing changed.</strong> {error}</p>{/if}
-		<div class="dialog-actions">
-			<button bind:this={safeButton} class="secondary-button" onclick={discard} disabled={saving}>Keep things as they are</button>
-			<button class="primary-button" onclick={approve} disabled={saving}>{saving ? 'Creating draft…' : plan.deliveryMode === 'gmail_draft' ? 'Create Gmail draft' : 'Save suggested message'}</button>
-		</div>
+	</div>
+	<div class="dialog-actions">
+		<button bind:this={safeButton} class="secondary-button" onclick={discard} disabled={saving}>Keep things as they are</button>
+		<button class="primary-button" onclick={approve} disabled={saving}>{saving ? 'Creating draft…' : plan.deliveryMode === 'gmail_draft' ? 'Create Gmail draft' : 'Save suggested message'}</button>
+	</div>
 </dialog>

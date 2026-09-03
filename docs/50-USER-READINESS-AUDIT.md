@@ -23,7 +23,7 @@ The core dayboard should stay simple. Most gaps can be addressed with four addit
 3. A supporter setup sheet: **implemented as a local challenge demonstration** for invite state, scope, expiry, preview, and revoke.
 4. Stronger calendar semantics: **implemented at prototype level** for weekly/daily expansion, named zones, source versions, overlap detection, and human-reviewed duplicate candidates. Per-occurrence exceptions and fully verified DST semantics remain production work.
 
-The implementation deliberately did not add another everyday tab. Freshness sits beside the date, reminder actions appear only in event details, supporter administration is a protected sheet, and privacy/emergency handoffs are single-purpose controls.
+The implementation deliberately did not add another everyday tab. Reminder actions appear in event details and in a direct day-summary sheet, supporter administration is a protected sheet, and privacy/emergency handoffs are single-purpose controls.
 
 ## Method
 
@@ -65,14 +65,14 @@ These are implementation findings, not speculative future features:
 | 7 | Peter, 79, arthritis | Operate the wall iPad with low precision | Works | Current touch targets meet the product's 44px floor. |
 | 8 | Elena, 74, temporarily one-handed | Review a message and decline it | Works | Core actions do not require gestures or two-handed input. |
 | 9 | Walter, 88, seated below a poorly mounted iPad | Reach navigation and voice controls | Blocked | A mounting/setup checklist plus optional remote or switch-control path. |
-| 10 | Ingrid, 82, visual fatigue | Check the day in under 20 seconds | Works | Guided display mode keeps Today primary and visually emphasises the next plan without a new navigation mode. |
+| 10 | Ingrid, 82, visual fatigue | Check the day in under 20 seconds | Works | Guided display mode reduces the timeline to one active plan and presents one clear next-step card without a new navigation mode. |
 
 ### B. Memory, cognition, language, and confidence
 
 | # | Example user and limitation | Task | Result | Smallest missing requirement |
 |---:|---|---|---|---|
 | 11 | Margaret, 80, mild short-term memory loss | Know whether she already prepared her documents | Works | Visible reminder state supports Done, Later, and Help, with timestamps in the underlying audit state. |
-| 12 | Denis, 85, early dementia | Resume after leaving the screen midway | Works | Guided mode persists, returns to the day-first home, and gives the first plan stronger emphasis. |
+| 12 | Denis, 85, early dementia | Resume after leaving the screen midway | Works | Guided mode persists, returns to the day-first home, and hides unrelated plans until “Show full day” is chosen. |
 | 13 | Aisha, 87, moderate cognitive impairment | Recognise who is visiting | Blocked | Optional familiar photo/name cards configured by a trusted supporter. |
 | 14 | Luis, 72, aphasia | Express that he needs transport help | Blocked | A small visual phrase/action board; free conversation alone is unsuitable. |
 | 15 | Mary, 83, low literacy | Understand an email-derived schedule change | Partial | Plain-language summaries need moderated comprehension testing and optional read-aloud per card. |

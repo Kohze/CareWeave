@@ -166,7 +166,7 @@ button.glance { cursor: pointer; }.attention-glance { background: var(--amber-so
 .trust-label { display: flex; padding: 9px 13px; gap: 7px; align-items: center; border-radius: 12px; background: var(--teal-soft); color: var(--teal-dark); font-size: .75rem; font-weight: 700; }
 .attention-header-actions { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }.attention-header-actions .secondary-button, .attention-header-actions .primary-button { display: flex; gap: 7px; align-items: center; }
 .gmail-feedback { margin: 0 0 16px; padding: 12px 15px; border-radius: 12px; background: var(--teal-soft); color: var(--teal-dark); }
-.attention-list { display: flex; flex-direction: column; gap: 13px; }.attention-list article { display: grid; padding: 23px; grid-template-columns: 54px minmax(0,1fr) auto; gap: 16px; align-items: start; border: 1px solid var(--line); border-radius: 21px; background: var(--paper); box-shadow: 0 7px 25px rgba(36,55,55,.05); }.attention-list article.selected { outline: 4px solid #f0bb63; }.attention-list article.resolved { opacity: .65; }.attention-icon { display: grid; width: 50px; height: 50px; place-items: center; border-radius: 15px; background: var(--amber-soft); color: #a66725; }.attention-meta { color: var(--teal); font-size: .68rem; font-weight: 800; text-transform: uppercase; }.attention-list h2 { margin: 4px 0; }.attention-list p { margin-bottom: 8px; color: var(--muted); }.requested { font-size: .76rem; }.attention-actions { display: flex; min-width: 145px; flex-direction: column; gap: 12px; align-items: end; }
+.attention-list { display: flex; flex-direction: column; gap: 13px; }.attention-list article { display: grid; padding: 23px; grid-template-columns: 54px minmax(0,1fr) auto; gap: 16px; align-items: start; border: 1px solid var(--line); border-radius: 21px; background: var(--paper); box-shadow: 0 7px 25px rgba(36,55,55,.05); }.attention-list article.selected { outline: 4px solid #f0bb63; }.attention-list article.resolved { border-color: #c8d2ce; background: #f3f5f1; }.attention-icon { display: grid; width: 50px; height: 50px; place-items: center; border-radius: 15px; background: var(--amber-soft); color: #a66725; }.attention-meta { color: var(--teal); font-size: .68rem; font-weight: 800; text-transform: uppercase; }.attention-list h2 { margin: 4px 0; }.attention-list p { margin-bottom: 8px; color: var(--muted); }.requested { font-size: .76rem; }.attention-actions { display: flex; min-width: 145px; flex-direction: column; gap: 12px; align-items: end; }
 
 .food-days { display: flex; width: 130px; height: 105px; flex-direction: column; align-items: center; justify-content: center; border-radius: 22px; background: var(--teal); color: white; }.food-days strong { font-family: 'Fraunces', serif; font-size: 2.6rem; line-height: .9; }.food-days span { font-size: .72rem; }.food-layout { display: grid; grid-template-columns: 1.5fr .8fr; gap: 22px; }.food-layout > section, .meal-notes { padding: 25px; }.grocery-list { display: flex; flex-direction: column; }.grocery-list button { display: flex; min-height: 72px; padding: 10px 4px; gap: 13px; align-items: center; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; }.grocery-list button > span:last-child { display: flex; flex-direction: column; }.grocery-list button small { color: var(--muted); }.grocery-list button.done > span:last-child { opacity: .55; text-decoration: line-through; }.meal-notes > p { display: flex; padding: 13px 0; gap: 9px; border-bottom: 1px solid var(--line); align-items: center; }.meal-notes > p .icon { color: var(--teal); }.shopping-date { display: flex; margin-top: 20px; padding: 16px; gap: 13px; align-items: center; border-radius: 16px; background: var(--amber-soft); }.shopping-date span { display: flex; flex-direction: column; }.shopping-date small { color: var(--muted); }
 
@@ -263,7 +263,7 @@ dialog.plan-dialog::backdrop, dialog.voice-sheet::backdrop, dialog.display-sheet
 	body { font-size: 18px; }.sidebar nav button { font-size: .72rem; }.display-button { min-width: 50px; margin-right: 10px; justify-content: center; }.display-button strong { display: none; }.page-intro { flex-direction: column; gap: 14px; align-items: stretch; }.page-intro-side { width: 100%; flex-direction: row; align-items: center; }.page-intro-side .freshness-strip { flex: 1; white-space: normal; }.date-switcher { width: 100%; }.page-intro-side .date-switcher { width: auto; }.date-switcher button { width: 56px; min-width: 56px; flex-basis: 56px; }.date-switcher div { flex: 1; }.page-title-row, .support-heading { flex-direction: column; gap: 15px; align-items: stretch; }.support-heading-actions { flex-direction: column; }.support-heading .secondary-button { justify-content: center; }.support-status { padding: 18px; grid-template-columns: 48px minmax(0, 1fr); }.support-status-icon { width: 46px; height: 46px; }.support-status > .freshness-strip { grid-column: 1 / 3; }.support-actions article { grid-template-columns: 43px minmax(0, 1fr); }.support-actions button { grid-column: 2; width: 100%; }.accepted-assignment { align-items: stretch; flex-direction: column; }.week-grid { grid-template-columns: 1fr; }.choice-grid, .invite-fields { grid-template-columns: 1fr; }.display-sheet, dialog.support-setup-sheet { padding: 23px 18px; }.access-person-heading { grid-template-columns: 46px minmax(0, 1fr); }.access-person-heading .secondary-button { grid-column: 2; }.skip-link { left: 12px; }.screensaver-brand { top: 22px; left: 22px; }.screensaver-clock { top: 70px; right: 22px; }.screensaver-clock time { font-size: 3.5rem; }.screensaver-clock span { max-width: 240px; font-size: .85rem; text-align: right; }.screensaver-controls { bottom: 22px; padding: 0 18px; }.screensaver-controls > div { width: 100%; flex-direction: column; align-items: center; }.screensaver-controls button, .screensaver-controls .motion-button { width: min(290px, 100%); min-width: 0; }.pond-koi { width: 170px; }.pond-crab { width: 74px; }
 }
 
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }.privacy-cover:not(.motion-paused) .koi-one { animation: koi-one-cross 23s linear infinite !important; }.privacy-cover:not(.motion-paused) .koi-two { animation: koi-two-cross 27s linear -9s infinite !important; }.privacy-cover:not(.motion-paused) .pond-koi .koi-body { animation: koi-breathe 2.8s ease-in-out infinite alternate !important; }.privacy-cover:not(.motion-paused) .pond-koi .koi-tail { animation: illustrated-koi-tail .7s ease-in-out infinite alternate !important; }.privacy-cover:not(.motion-paused) .pond-koi .koi-fin { animation: illustrated-koi-fin 1.15s ease-in-out infinite alternate !important; }.privacy-cover:not(.motion-paused) .crab-one { animation: crab-one-walk 8s ease-in-out infinite alternate !important; }.privacy-cover:not(.motion-paused) .crab-two { animation: crab-two-walk 10s ease-in-out -3s infinite alternate !important; }.privacy-cover:not(.motion-paused) .left-claw { animation: crab-left-wave 1.8s ease-in-out infinite alternate !important; }.privacy-cover:not(.motion-paused) .right-claw { animation: crab-right-wave 2.1s ease-in-out -.7s infinite alternate !important; }.privacy-cover:not(.motion-paused) .pond-bubble { animation: bubble-rise 8s ease-in infinite !important; }.privacy-cover:not(.motion-paused) .bubble-two { animation-delay: -3s !important; animation-duration: 6s !important; }.privacy-cover:not(.motion-paused) .bubble-three { animation-delay: -5s !important; animation-duration: 10s !important; }.privacy-cover:not(.motion-paused) .water-ring { animation: pond-ring 5s ease-out infinite !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 
 @media (max-width: 850px) and (min-width: 701px) { .route-map { height: 280px; } }
 @media (max-width: 700px) { .route-map { height: 240px; } }
@@ -278,7 +278,6 @@ dialog.plan-dialog::backdrop, dialog.voice-sheet::backdrop, dialog.display-sheet
 
 /* Start the first koi mid-route so both fish are visible as soon as the pond opens. */
 .privacy-cover .koi-one { animation-delay: -5s; }
-@media (prefers-reduced-motion: reduce) { .privacy-cover:not(.motion-paused) .koi-one { animation-delay: -5s !important; } }
 
 /* Immersive, canvas-rendered privacy pond. The older SVG rules above remain harmless
    fallbacks for cached clients while this layer defines the current experience. */
@@ -572,7 +571,7 @@ main.column-strip.is-scrolling::-webkit-scrollbar-thumb { border-color: #e4e2da;
 .today-forecast-summary strong { font-size: 1rem; }
 .today-forecast-summary :is(small, em) { font-size: .8rem; }
 .week-forecast-icon { display: grid; width: 52px; height: 52px; place-items: center; border-radius: 16px; background: rgba(255, 255, 255, .66); color: var(--teal-dark); }
-.week-forecast-summary > span:last-child,
+.week-forecast-summary > .forecast-copy,
 .week-day-weather > span { display: flex; min-width: 0; flex-direction: column; }
 .week-forecast-summary small { color: var(--teal-dark); font-size: .8rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .week-forecast-summary strong { margin-top: 2px; font-family: Georgia, 'Times New Roman', serif; font-size: 1.2rem; }
@@ -714,4 +713,63 @@ main.column-strip.is-scrolling::-webkit-scrollbar-thumb { border-color: #e4e2da;
 	.today-column .calm-line { white-space: normal; }
 	.attention-list article { grid-template-columns: 50px minmax(0, 1fr); }
 	.attention-actions { grid-column: 2; align-items: stretch; }
+}
+
+/* A focused first-run mode for people who want one clear next step. */
+.guided-brief {
+	display: grid;
+	margin: 20px 0 24px;
+	padding: 24px 26px;
+	grid-template-columns: 60px minmax(0, 1fr) auto;
+	gap: 18px;
+	align-items: center;
+	border: 1px solid #a8d1c5;
+	border-radius: 24px;
+	background: linear-gradient(130deg, rgba(226, 244, 237, .98), rgba(248, 250, 245, .94));
+	box-shadow: var(--shadow);
+}
+.guided-brief-icon { display: grid; width: 58px; height: 58px; place-items: center; border-radius: 18px; background: var(--teal); color: white; }
+.guided-brief h2 { margin: 3px 0; font-size: clamp(1.4rem, 2vw, 1.85rem); }
+.guided-brief p { margin: 0; color: var(--muted); }
+.guided-brief-actions { display: flex; gap: 9px; flex-direction: column; }
+.guided-brief-actions button { margin: 0; white-space: nowrap; }
+.app-shell.guided .timeline-section { border-color: #a8d1c5; }
+.app-shell.guided .timeline .event-card:first-child { border-width: 3px; box-shadow: 0 8px 24px rgba(36,55,55,.1); }
+
+.next-plan-card { display: flex; margin-top: 18px; padding: 17px; flex-direction: column; gap: 4px; border: 1px solid #b7d6cf; border-radius: 16px; background: var(--teal-soft); }
+.next-plan-card > span:not(.eyebrow) { color: var(--muted); }
+.next-plan-card button { margin-top: 11px; }
+
+/* Keep review context and both decisions visible on smaller screens. */
+dialog.plan-dialog[open] { display: flex; width: min(670px, calc(100% - 28px)); max-height: calc(100dvh - 28px); padding: 0; flex-direction: column; overflow: hidden; }
+.plan-dialog-header { flex: 0 0 auto; padding: 28px 30px 0; }
+.plan-dialog-header .dialog-icon { margin-bottom: 14px; }
+.plan-dialog-header h2 { margin-bottom: 8px; }
+.plan-dialog-content { min-height: 0; padding: 0 30px; overflow-y: auto; overscroll-behavior: contain; }
+.plan-dialog > .dialog-actions { flex: 0 0 auto; margin: 0; padding: 18px 30px 28px; border-top: 1px solid var(--line); background: rgba(255, 253, 248, .97); }
+
+dialog.reminder-sheet { position: fixed; inset: 0; width: min(520px, calc(100% - 28px)); max-height: calc(100dvh - 28px); margin: auto; padding: 28px; border: 0; border-radius: 25px; background: var(--paper); color: var(--ink); box-shadow: 0 30px 90px rgba(0,0,0,.28); overflow: auto; }
+dialog.reminder-sheet::backdrop { background: rgba(18,40,47,.72); backdrop-filter: blur(7px); }
+.reminder-sheet-heading { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 15px; align-items: start; }
+.reminder-sheet-heading .dialog-icon { margin: 0; }
+.reminder-sheet-heading h2 { margin: 3px 0; }
+.reminder-sheet-heading p { margin: 0; color: var(--muted); }
+.reminder-sheet > .reminder-controls { margin: 22px 0 16px; }
+
+.screensaver-controls > p { margin: -5px 0 3px; color: rgba(239, 249, 244, .68); font-size: .78rem; text-shadow: 0 2px 12px rgba(0, 25, 35, .45); }
+
+.event-main { grid-template-columns: 62px 46px minmax(0, 1fr) 22px; }
+.event-copy strong { display: -webkit-box; overflow: hidden; line-height: 1.2; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.event-copy .status-pill { width: fit-content; margin-top: 5px; color: #70440f; }
+
+@media (max-width: 700px) {
+	.today-column .guided-brief { width: calc(100vw - 42px); grid-template-columns: 50px minmax(0, 1fr); padding: 20px; gap: 13px; }
+	.event-main { grid-template-columns: 48px 40px minmax(0, 1fr) 18px; }
+	.guided-brief-icon { width: 48px; height: 48px; border-radius: 15px; }
+	.guided-brief-actions { grid-column: 1 / 3; flex-direction: row; }
+	.guided-brief-actions button { flex: 1; white-space: normal; }
+	.plan-dialog-header { padding: 22px 20px 0; }
+	.plan-dialog-content { padding: 0 20px; }
+	.plan-dialog > .dialog-actions { padding: 15px 20px 20px; grid-template-columns: 1fr; }
+	dialog.reminder-sheet { padding: 22px 20px; }
 }

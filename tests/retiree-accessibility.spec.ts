@@ -78,7 +78,8 @@ test('uses readable text, forgiving targets, and a complete iPad week', async ({
 test('calendar events open complete details and clearly track selection', async ({ page }, testInfo) => {
 	const elenaCard = page.getByRole('article', { name: /Elena visits/ });
 	const elenaButton = elenaCard.getByRole('button').first();
-	// The next upcoming item is intentionally selected and explained on first load.
+	// Past events remain available, but CareWeave never presents one as the next thing to do.
+	await elenaButton.click();
 	await expect(elenaButton).toHaveAttribute('aria-expanded', 'true');
 	await expect(elenaCard).toHaveClass(/selected/);
 	let details = page.getByLabel('Helpful details');
@@ -87,6 +88,7 @@ test('calendar events open complete details and clearly track selection', async 
 	await expect(details.getByText('Help with medication box and breakfast.')).toBeVisible();
 	await expect(details.getByText('Elena', { exact: true })).toBeVisible();
 	await expect(details.getByText('Carer', { exact: true })).toBeVisible();
+	await expect(details.getByText(/Visit completed/)).toBeVisible();
 
 	const lunchButton = page.getByRole('article', { name: /Lunch/ }).getByRole('button').first();
 	await lunchButton.click();
@@ -358,7 +360,7 @@ test('exploratory pass covers control cycles and safe exits', async ({ page }, t
 	await page.getByRole('button', { name: 'Previous day' }).click();
 	await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
 
-	await page.getByRole('button', { name: /things need your attention/ }).click();
+	await page.getByRole('button', { name: /decisions? to review/ }).click();
 	await expect.poll(() => page.evaluate(() => {
 		const strip = document.querySelector<HTMLElement>('.column-strip')!;
 		const attention = document.querySelector<HTMLElement>('.attention-column')!;
