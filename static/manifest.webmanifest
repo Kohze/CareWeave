@@ -1,0 +1,19 @@
+{
+  "name": "ClearDay — your day, clearly",
+  "short_name": "ClearDay",
+  "description": "A calm, agent-compatible home dayboard for everyday commitments.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3f0e7",
+  "theme_color": "#f3f0e7",
+  "icons": [
+    {
+      "src": "/icons/clearday.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
