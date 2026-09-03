@@ -10,6 +10,8 @@ It is designed for **older people, disabled people, retirees with changing suppo
 
 Built for the OpenAI WebMCP Challenge with SvelteKit, Svelte 5, Vite, TypeScript, OpenAI Realtime, Leaflet, OpenStreetMap, Open-Meteo, Atmosphere, Meteocons, and Lucide.
 
+> **Why WebMCP is essential:** CareWeave is not a dashboard with a chatbot attached. It is a shared, consent-aware workspace for a person and their agent. WebMCP gives the agent structured access to the same care context the person sees, lets it bring the relevant day, appointment, or route into view, and allows it to prepare useful actions without silently taking control. The result is assistance that reduces cognitive load while preserving autonomy.
+
 ![CareWeave running in an iPad landscape viewport](artifacts/audit-final-ipad-landscape.png)
 
 > [!IMPORTANT]
@@ -25,14 +27,14 @@ Ask the browser agent:
 2. **“Show me tomorrow and put the route to Dr Patel on screen.”** The agent changes the same interface the person is looking at instead of merely describing it.
 3. **“Prepare a request to move the appointment to a calm morning.”** CareWeave creates a visible, expiring review plan. Nothing is sent and the confirmed appointment does not change.
 
-That loop—**understand together, focus the shared screen, prepare safely, let the person decide**—is the core WebMCP experience.
+Watch both the board and the agent during those prompts. The agent does not merely return text: it understands structured household state, moves the shared interface to the relevant context, and prepares an exact action for human review. That loop—**understand together, focus the shared screen, prepare safely, let the person decide**—is the core WebMCP experience.
 
 ## Contents
 
 - [The idea](#the-idea)
 - [Who CareWeave is for](#who-careweave-is-for)
 - [Why this matters](#why-this-matters)
-- [Why WebMCP matters here](#why-webmcp-matters-here)
+- [Why CareWeave needs WebMCP](#why-careweave-needs-webmcp)
 - [Feature tour](#feature-tour)
 - [Architecture](#architecture)
 - [WebMCP implementation](#webmcp-implementation)
@@ -83,9 +85,22 @@ CareWeave creates social value in four ways:
 
 The ambition is not to automate a person's life. It is to make daily life require less effort while preserving dignity, privacy, and choice.
 
-## Why WebMCP matters here
+## Why CareWeave needs WebMCP
 
 [WebMCP site tools](https://learn.chatgpt.com/docs/webmcp) let a website expose useful actions directly to a compatible agent working on the same open page. CareWeave registers 32 top-level JavaScript tools through `document.modelContext.registerTool`.
+
+Daily care coordination is a particularly strong fit for this model. The important facts are spread across dates, appointments, routes, food plans, reminders, support roles, and messages. A general assistant looking only at rendered pixels has to guess what controls mean and cannot reliably tell a proposed change from a confirmed real-world event. In a care context, that ambiguity is not merely inconvenient—it can undermine confidence, create extra work, or cause someone to act on the wrong information.
+
+WebMCP gives CareWeave a precise collaboration contract:
+
+| Without WebMCP | With CareWeave's WebMCP tools |
+|---|---|
+| The agent infers meaning from pixels and page text. | The agent receives validated commitments, dates, provenance, pacing, freshness, and unresolved actions as structured data. |
+| The answer exists only in chat, separate from the person's board. | The agent can focus the relevant date, highlight the same appointment, and open its route on the shared screen. |
+| A vague request such as “move my appointment” risks collapsing intent, message, and outcome into one step. | CareWeave creates a reviewable plan and preserves the distinction between a suggestion, a Gmail draft, a sent request, and a verified clinic confirmation. |
+| Every assistant or browser integration needs a bespoke adapter. | Any compatible WebMCP host can discover the site's declared capabilities from the open page. |
+
+This matters most for people who may already be managing fatigue, pain, memory changes, reduced dexterity, or a complicated support network. They should not have to translate an agent's answer back into a calendar, hunt for the item it mentioned, or wonder whether it actually changed something. CareWeave uses WebMCP so the person and agent can look at the same thing, reason from the same facts, and stop at a clear human decision point.
 
 This produces a genuinely shared workspace:
 
@@ -98,7 +113,7 @@ This produces a genuinely shared workspace:
 
 The same domain handlers power touch interactions, WebMCP, and the embedded conversational voice agent. There is one source of truth rather than three implementations that can disagree.
 
-CareWeave is not a conventional dashboard with a chat box attached. WebMCP lets the agent work with structured household state, reveal its work on the person's screen, and stop at a deliberate human approval boundary. Without WebMCP, an agent would have to infer dates and controls from pixels, could not reliably share visual focus, and would struggle to distinguish a requested appointment change from a confirmed one.
+The core innovation is therefore not “AI can read a calendar.” It is that an open website can expose bounded capabilities that make human-agent cooperation legible and safe. Those contracts keep the visible interface and the agent aligned around one truthful state.
 
 ### Alignment with the judging criteria
 
@@ -127,15 +142,21 @@ WebMCP operates on the same open CareWeave page as the person, so a remote datab
 |---|---|
 | ![The privacy-limited CareWeave family supporter dashboard](artifacts/audit-final-family-support.png) | ![The CareWeave live weather privacy screen](artifacts/audit-final-screensaver.png) |
 
+| Inspectable WebMCP tools | A reply in the person’s own words |
+|---|---|
+| ![The grouped catalogue of CareWeave WebMCP tools](artifacts/audit-final-webmcp-tools.png) | ![A voice-dictated reply ready for human review](artifacts/audit-final-voice-reply-composer.png) |
+
 ### Household planning
 
 - A horizontally scrolling ribbon of focused columns with generous vertical spacing
 - A simplified Day view and readable Next 7 days view with a professional local weather icon and high temperature for every day
+- A coherent relative-date demo week spanning care, food, health, rest, rehabilitation, friendship, and a pharmacy delivery
 - Health appointments, carer visits, meals, shopping, travel, social plans, and household tasks
 - Progressive event details with people, place, notes, status, preparation, source, and actions
 - Calm pacing labels based on duration, travel, gaps, and breathing-room preferences
 - Food coverage, shopping deadline, and a large tappable grocery checklist
 - Human-readable history, locally saved message suggestions, and local undo
+- An inspectable WebMCP catalogue that shows all 32 tools, grouped by purpose and safety boundary
 
 ### Routes
 
@@ -152,6 +173,7 @@ WebMCP operates on the same open CareWeave page as the person, so a remote datab
 - Read-only import of recent message metadata/snippets and review-only Gmail draft creation
 - Minimal provenance instead of copying an entire inbox
 - Email-derived content explicitly marked as untrusted
+- Voice-dictated or typed replies in the person’s own words, followed by the same exact recipient-and-message review
 - Reviewable clinic reschedule and cancellation requests
 - Exact recipient, subject, body, delivery mode, and warnings shown before approval
 - A request never masquerades as a confirmed calendar change
@@ -549,7 +571,7 @@ The automated suite covers:
 - WCAG AA text contrast and axe-core WCAG A/AA checks
 - Reduced motion, forced colours, 200% text reflow, and horizontal-overflow checks
 
-The current verification suite includes 41 unit tests. The latest browser run passed 100 applicable checks across iPad landscape, iPad portrait, and mobile layouts; 38 checks were deliberately skipped where they apply only to another viewport.
+The current verification suite includes 42 unit tests. The latest browser run passed 106 applicable checks across iPad landscape, iPad portrait, and mobile layouts; 44 checks were deliberately skipped where they apply only to another viewport.
 
 ## Deployment
 
@@ -569,6 +591,8 @@ The repository includes `vercel.json` and a Vercel Function for Realtime session
 8. Deploy and test the site over HTTPS, including Gmail connection/draft creation and the first voice connection from the production URL.
 
 The function accepts only same-origin `application/sdp` requests by default. Set `REALTIME_ALLOWED_ORIGINS` to a comma-separated list only when an additional trusted origin must create sessions. The static app remains deployable without the voice key; in that case, Start conversation gives a clear configuration message instead of exposing credentials or failing silently.
+
+The focused reply composer uses browser-provided speech recognition when available and always offers a typed fallback. It does not expose or require an OpenAI API key. Browser dictation may be processed by the device or browser provider, which the composer discloses before use. The broader back-and-forth CareWeave conversation is the separate Realtime feature described above.
 
 ### Other hosts
 

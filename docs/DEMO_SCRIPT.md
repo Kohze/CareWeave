@@ -10,9 +10,11 @@ Show the iPad-sized Day view.
 
 “Most planners make an older person manage the software. CareWeave does the opposite: email, appointments, care, food, shopping, and routes collapse into one calm household dayboard. The person sees only what matters now.”
 
-Point to day pacing, two attention items, food coverage, and tomorrow’s doctor appointment.
+Point to day pacing, the one decision waiting, food coverage, and tomorrow’s doctor appointment. Briefly show the seven-day column to establish the wider care story: a rest day, physiotherapy, time with a friend, and a pharmacy delivery.
 
 ## 0:25–0:55 — WebMCP understanding
+
+Tap **Assistant ready** for a quick visual proof that CareWeave exposes 32 inspectable tools across understanding, shared visual focus, safe preparation, and confirmed updates. Close the catalogue.
 
 In ChatGPT text, say: “What do I need to do today, and is tomorrow rushed?”
 
@@ -53,6 +55,7 @@ Close on Day view: “CareWeave: everyday care, woven together.”
 - Use fictional data only and reset immediately before recording.
 - Record at 1024×768 or 1280×800 with pointer enlarged.
 - Ensure tool calls or the ChatGPT activity are legible at least once.
+- Show the in-app 32-tool catalogue briefly; it makes the non-trivial WebMCP implementation obvious even if the tool-call UI is small in the recording.
 - Show the production URL and the no-login first run.
 - Keep narration audible; trim dead time, but do not fake tool outcomes.
 - Export under three minutes and upload as a public or unlisted YouTube video accessible without login.

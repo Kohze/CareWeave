@@ -32,14 +32,20 @@ export function createSeedData(): AppData {
 	const today = localDateKey();
 	const tomorrow = addDays(today, 1);
 	const afterTomorrow = addDays(today, 2);
+	const fourthDay = addDays(today, 4);
+	const fifthDay = addDays(today, 5);
+	const sixthDay = addDays(today, 6);
 	const now = new Date().toISOString();
+	const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 	return {
 		version: 1,
 		revision: 1,
 		people: [
 			{ id: 'person-elena', name: 'Elena', role: 'Carer', email: 'elena@kindcare.example' },
 			{ id: 'person-patel', name: 'Dr Patel', role: 'GP', email: 'reception@greenlane.example' },
-			{ id: 'person-sam', name: 'Sam', role: 'Son', email: 'sam@example.test', phone: '+44 7700 900123' }
+			{ id: 'person-sam', name: 'Sam', role: 'Son', email: 'sam@example.test', phone: '+44 7700 900123' },
+			{ id: 'person-maya', name: 'Maya Lewis', role: 'Physiotherapist', email: 'maya@brookfield-rehab.example' },
+			{ id: 'person-nora', name: 'Nora', role: 'Friend', phone: '+44 7700 900456' }
 		],
 		places: [
 			{ id: 'place-home', name: 'Home', address: '14 Orchard Close', shortAddress: 'Home', latitude: 51.50755, longitude: -0.1372 },
@@ -51,7 +57,9 @@ export function createSeedData(): AppData {
 				latitude: 51.51415,
 				longitude: -0.1255
 			},
-			{ id: 'place-market', name: 'Local Market', address: '8 Market Street', shortAddress: 'Market', latitude: 51.51075, longitude: -0.1422 }
+			{ id: 'place-market', name: 'Local Market', address: '8 Market Street', shortAddress: 'Market', latitude: 51.51075, longitude: -0.1422 },
+			{ id: 'place-park', name: 'Orchard Park', address: '2 Orchard Walk', shortAddress: 'Orchard Park', latitude: 51.5092, longitude: -0.1401 },
+			{ id: 'place-hub', name: 'Brookfield Community Hub', address: '6 Library Square, Brookfield', shortAddress: 'Community Hub', latitude: 51.5121, longitude: -0.1328 }
 		],
 		commitments: [
 			commitment('event-carer', 'care', 'Elena visits', today, '08:30', '09:30', {
@@ -69,6 +77,8 @@ export function createSeedData(): AppData {
 			}),
 			commitment('event-walk', 'social', 'Short walk with Sam', today, '15:00', '15:45', {
 				participantIds: ['person-sam'],
+				locationId: 'place-park',
+				travelMinutes: 7,
 				notes: 'A gentle walk together around the nearby park. Turn back whenever you feel tired.'
 			}),
 			commitment('event-doctor', 'health', 'Appointment with Dr Patel', tomorrow, '11:00', '11:30', {
@@ -87,7 +97,28 @@ export function createSeedData(): AppData {
 			commitment('event-shopping', 'shopping', 'Food shopping', afterTomorrow, '10:30', '11:30', {
 				locationId: 'place-market',
 				travelMinutes: 12,
-				notes: 'Weekly food shopping for milk, bread and bananas. The shopping list is available in Food.'
+				notes: 'Weekly food shopping for milk, bread and bananas. The shopping list is available in Food.',
+				prep: [{ id: 'prep-shopping-bag', label: 'Take a shopping bag', done: true }]
+			}),
+			commitment('event-physio', 'health', 'Physiotherapy video call', fourthDay, '10:00', '10:40', {
+				participantIds: ['person-maya'],
+				importance: 'important',
+				notes: 'Maya will call on the tablet to review the gentle balance exercises. The call can pause at any time.',
+				prep: [
+					{ id: 'prep-physio-space', label: 'Clear space beside the chair', done: true },
+					{ id: 'prep-physio-aid', label: 'Keep walking aid nearby', done: false }
+				]
+			}),
+			commitment('event-community', 'social', 'Coffee at the community hub', fifthDay, '11:00', '12:15', {
+				participantIds: ['person-nora'],
+				locationId: 'place-hub',
+				travelMinutes: 10,
+				notes: 'A relaxed coffee morning with Nora. The community hub has step-free access and a quiet seating area.'
+			}),
+			commitment('event-pharmacy', 'administrative', 'Prescription delivery window', sixthDay, '14:00', '16:00', {
+				importance: 'important',
+				sourceIds: ['mail-pharmacy'],
+				notes: 'The pharmacy plans to deliver between 14:00 and 16:00. No payment or medical decision is needed at the door.'
 			})
 		],
 		sources: [
@@ -120,6 +151,16 @@ export function createSeedData(): AppData {
 				receivedAt: now,
 				summary: 'The usual milk is unavailable. A smaller bottle can be substituted.',
 				untrusted: true
+			},
+			{
+				id: 'mail-pharmacy',
+				provider: 'demo_mailbox',
+				from: 'Brookfield Pharmacy <delivery@brookfield-pharmacy.example>',
+				to: 'owner@example.test',
+				subject: 'Prescription delivery confirmed',
+				receivedAt: minutesAgo(46),
+				summary: `Delivery is confirmed for ${sixthDay} between 14:00 and 16:00.`,
+				untrusted: true
 			}
 		],
 		attentionItems: [
@@ -145,6 +186,18 @@ export function createSeedData(): AppData {
 				status: 'new',
 				sourceId: 'mail-grocery',
 				createdAt: now
+			},
+			{
+				id: 'attention-pharmacy',
+				category: 'delivery',
+				title: 'Prescription delivery confirmed',
+				summary: `Brookfield Pharmacy confirmed a delivery window on ${sixthDay} from 14:00 to 16:00.`,
+				requestedAction: 'No action needed; the delivery is already on the dayboard',
+				confidence: 'high',
+				status: 'resolved',
+				sourceId: 'mail-pharmacy',
+				relatedCommitmentId: 'event-pharmacy',
+				createdAt: minutesAgo(45)
 			}
 		],
 		supportCircle: [
@@ -202,8 +255,11 @@ export function createSeedData(): AppData {
 		plans: [],
 		outbox: [],
 		activity: [
-			{ id: 'activity-ready', type: 'system', label: 'CareWeave is ready', detail: 'Demo household loaded safely.', createdAt: now },
-			{ id: 'activity-mail', type: 'mail_scan', label: 'Mailbox checked', detail: '2 messages checked; 1 still needs attention.', createdAt: now }
+			{ id: 'activity-mail', type: 'mail_scan', label: 'Messages checked', detail: 'The milk substitution still needs a decision. Nothing was added automatically.', createdAt: minutesAgo(4) },
+			{ id: 'activity-care', type: 'care_visit', label: 'Care visit completed', detail: 'Elena marked the morning visit complete at 09:25.', createdAt: minutesAgo(18) },
+			{ id: 'activity-pharmacy', type: 'calendar', label: 'Delivery added to the dayboard', detail: 'The confirmed pharmacy window was added for Wednesday afternoon.', createdAt: minutesAgo(45) },
+			{ id: 'activity-prep', type: 'preparation', label: 'Clinic preparation updated', detail: 'The hospital letter is ready; the medication list is still to pack.', createdAt: minutesAgo(67) },
+			{ id: 'activity-ready', type: 'system', label: 'CareWeave is ready', detail: 'The fictional household is ready to explore safely.', createdAt: minutesAgo(90) }
 		],
 		preferences: {
 			ownerName: '',

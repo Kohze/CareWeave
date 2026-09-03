@@ -13,6 +13,17 @@ describe('calm planning engine', () => {
 		]);
 	});
 
+	it('seeds a varied but calm seven-day demonstration story', () => {
+		const data = createSeedData();
+		const today = localDateKey();
+		expect(commitmentsForDate(data, addDays(today, 1)).map((item) => item.id)).toEqual(['event-doctor']);
+		expect(commitmentsForDate(data, addDays(today, 2)).map((item) => item.id)).toEqual(['event-shopping']);
+		expect(commitmentsForDate(data, addDays(today, 3))).toEqual([]);
+		expect(commitmentsForDate(data, addDays(today, 4)).map((item) => item.id)).toEqual(['event-physio']);
+		expect(commitmentsForDate(data, addDays(today, 5)).map((item) => item.id)).toEqual(['event-community']);
+		expect(commitmentsForDate(data, addDays(today, 6)).map((item) => item.id)).toEqual(['event-pharmacy']);
+	});
+
 	it('never suggests an overlapping slot', () => {
 		const data = createSeedData();
 		const date = localDateKey();

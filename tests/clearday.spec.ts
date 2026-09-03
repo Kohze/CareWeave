@@ -274,6 +274,9 @@ test('imports Gmail previews and creates a draft only after visible approval', a
 	const gmailItem = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Please confirm your appointment' }) });
 	await expect(gmailItem).toBeVisible();
 	await gmailItem.getByRole('button', { name: 'Prepare reply' }).click();
+	const composer = page.getByRole('dialog', { name: /Reply to Please confirm your appointment/ });
+	await composer.getByLabel('Your reply').fill('Hello, the proposed appointment time is suitable. Thank you.');
+	await composer.getByRole('button', { name: 'Review reply' }).click();
 	const dialog = page.getByRole('dialog', { name: /Reply about Please confirm your appointment/ });
 	await expect(dialog.getByRole('button', { name: 'Create Gmail draft' })).toBeVisible();
 	expect(draftRequests).toBe(0);
@@ -283,9 +286,67 @@ test('imports Gmail previews and creates a draft only after visible approval', a
 	await expect(page.getByText('Gmail draft — not sent')).toBeVisible();
 });
 
+test('shows every WebMCP tool from the assistant status button', async ({ page }) => {
+	const statusButton = page.getByRole('button', { name: /Show WebMCP tools/ });
+	await statusButton.click();
+	const catalogue = page.getByRole('dialog', { name: 'CareWeave’s WebMCP tools' });
+	await expect(catalogue).toBeVisible();
+	await expect(catalogue.getByRole('heading', { name: 'Understand' })).toBeVisible();
+	await expect(catalogue.getByRole('heading', { name: 'Show together' })).toBeVisible();
+	await expect(catalogue.getByRole('heading', { name: 'Prepare safely' })).toBeVisible();
+	await expect(catalogue.getByRole('heading', { name: 'Update with consent' })).toBeVisible();
+	await expect(catalogue.locator('.tool-list details')).toHaveCount(32);
+	await catalogue.getByText('get_day_brief', { exact: true }).click();
+	await expect(catalogue.getByText(/Read a concise, calm household brief/)).toBeVisible();
+	if ((await page.viewportSize())?.width === 1024) await page.screenshot({ path: 'artifacts/audit-final-webmcp-tools.png' });
+	await catalogue.getByRole('button', { name: 'Close WebMCP tools' }).click();
+	await expect(statusButton).toBeFocused();
+});
+
+test('turns dictated words into a reviewable reply without sending', async ({ page }, testInfo) => {
+	test.skip(testInfo.project.name !== 'ipad-landscape', 'The browser dictation bridge is exercised once.');
+	await page.evaluate(() => {
+		class TestSpeechRecognition {
+			continuous = false;
+			interimResults = false;
+			lang = '';
+			onstart: (() => void) | null = null;
+			onend: (() => void) | null = null;
+			onerror: ((event: { error: string }) => void) | null = null;
+			onresult: ((event: { results: ArrayLike<{ 0: { transcript: string }; isFinal: boolean }> }) => void) | null = null;
+			start() {
+				this.onstart?.();
+				this.onresult?.({ results: [{ 0: { transcript: 'Hello, the smaller bottle is fine. Thank you.' }, isFinal: true }] });
+				this.onend?.();
+			}
+			stop() { this.onend?.(); }
+			abort() { this.onend?.(); }
+		}
+		Object.defineProperty(window, 'SpeechRecognition', { configurable: true, value: TestSpeechRecognition });
+		Object.defineProperty(window, 'webkitSpeechRecognition', { configurable: true, value: TestSpeechRecognition });
+	});
+	await page.getByRole('button', { name: /Attention$/ }).click();
+	await waitForViewToSettle(page, '.attention-column');
+	const milkItem = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Choose a milk substitute' }) });
+	const prepareReply = milkItem.getByRole('button', { name: 'Prepare reply' });
+	await prepareReply.scrollIntoViewIfNeeded();
+	await expect(prepareReply).toBeInViewport();
+	await prepareReply.click();
+	const composer = page.getByRole('dialog', { name: /Reply to Choose a milk substitute/ });
+	await expect(composer).toBeVisible();
+	await composer.getByRole('button', { name: /Speak your reply/ }).click();
+	await expect(composer.getByLabel('Your reply')).toHaveValue('Hello, the smaller bottle is fine. Thank you.');
+	await page.screenshot({ path: 'artifacts/audit-final-voice-reply-composer.png' });
+	await composer.getByRole('button', { name: 'Review reply' }).click();
+	const review = page.getByRole('dialog', { name: /Reply about Choose a milk substitute/ });
+	await expect(review.getByText('Hello, the smaller bottle is fine. Thank you.', { exact: true })).toBeVisible();
+	await expect(review.getByRole('button', { name: 'Save suggested message' })).toBeVisible();
+	await page.screenshot({ path: 'artifacts/audit-final-voice-reply.png' });
+});
+
 test('registers the WebMCP tool suite and tools update the same visible state', async ({ page }) => {
 	await expect.poll(() => page.evaluate(() => window.__registeredTools.length)).toBe(32);
-	await expect(page.getByRole('note', { name: /WebMCP: 32 site tools connected/i })).toBeVisible();
+	await expect(page.getByRole('button', { name: /Show WebMCP tools: 32 site tools connected/i })).toBeVisible();
 	const names = await page.evaluate(() => window.__registeredTools.map((tool) => tool.name));
 	expect(names).toContain('get_day_brief');
 	expect(names).toContain('create_appointment_request_plan');
@@ -454,8 +515,8 @@ test('shows a truthful disconnected state when the host rejects part of registra
 		});
 	});
 	await page.reload();
-	await expect(page.getByRole('note', { name: /WebMCP: connection failed/i })).toBeVisible();
-	await expect(page.getByRole('note', { name: /WebMCP:/i })).toHaveAttribute('title', /failed after 2 of 32 tools/i);
+	await expect(page.getByRole('button', { name: /Show WebMCP tools: connection failed/i })).toBeVisible();
+	await expect(page.getByRole('button', { name: /Show WebMCP tools:/i })).toHaveAttribute('title', /failed after 2 of 32 tools/i);
 	await expect.poll(() => page.evaluate(() => window.__registeredTools.length)).toBe(0);
 	if ((await page.viewportSize())?.width === 1024) await page.screenshot({ path: 'artifacts/audit-final-webmcp-failure.png' });
 });

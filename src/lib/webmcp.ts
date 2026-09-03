@@ -480,8 +480,8 @@ export function unregisterCareWeaveTools(): void {
 	window.__careWeaveWebMcpController = undefined;
 }
 
-export function toolInventory(): Array<{ name: string; description: string; readOnly: boolean }> {
-	return careWeaveTools().map((tool) => ({ name: tool.name, description: tool.description, readOnly: tool.annotations?.readOnlyHint === true }));
+export function toolInventory(): Array<{ name: string; title: string; description: string; readOnly: boolean }> {
+	return careWeaveTools().map((tool) => ({ name: tool.name, title: tool.title ?? tool.name.replaceAll('_', ' '), description: tool.description, readOnly: tool.annotations?.readOnlyHint === true }));
 }
 
 const voiceBlockedTools = new Set([

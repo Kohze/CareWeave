@@ -96,11 +96,20 @@ export const household = {
 				const restored = JSON.parse(saved) as AppData;
 				const isLegacyDemoHousehold = restored.people?.some((person) => person.id === 'person-sam')
 					&& restored.sources?.some((source) => source.id === 'mail-clinic' && source.provider === 'demo_mailbox');
+				const demoNeedsStoryRefresh = isLegacyDemoHousehold
+					&& !restored.commitments?.some((item) => item.id === 'event-physio');
 				if (isLegacyDemoHousehold && restored.preferences?.ownerName === 'Margaret') {
 					restored.preferences.ownerName = '';
 					for (const source of restored.sources) {
 						if (source.to === 'margaret@example.test') source.to = 'owner@example.test';
 					}
+				}
+				if (demoNeedsStoryRefresh) {
+					const fresh = createSeedData();
+					fresh.preferences = { ...fresh.preferences, ...restored.preferences };
+					save(fresh);
+					dataStore.set(fresh);
+					return;
 				}
 				restored.preferences.textSize ??= 'standard';
 				restored.preferences.guidedMode ??= false;

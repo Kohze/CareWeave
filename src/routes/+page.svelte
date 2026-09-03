@@ -22,6 +22,8 @@
 	import VoiceSheet from '$lib/components/VoiceSheet.svelte';
 	import WeatherGlyph from '$lib/components/WeatherGlyph.svelte';
 	import WeatherForecastSheet from '$lib/components/WeatherForecastSheet.svelte';
+	import ToolInventorySheet from '$lib/components/ToolInventorySheet.svelte';
+	import ReplyComposerSheet from '$lib/components/ReplyComposerSheet.svelte';
 
 	let voiceOpen = $state(false);
 	let displayOpen = $state(false);
@@ -29,6 +31,8 @@
 	let helpOpen = $state(false);
 	let privacyOpen = $state(false);
 	let weatherOpen = $state(false);
+	let toolsOpen = $state(false);
+	let replyAttentionId = $state<string>();
 	let activeReminderId = $state<string>();
 	let selectedSupporterId = $state('person-sam');
 	let voiceSupported = $state(false);
@@ -49,6 +53,7 @@
 	let supportColumn: HTMLElement;
 	let historyColumn: HTMLElement;
 	let detailColumn: HTMLElement | undefined;
+	let webMcpButton: HTMLButtonElement;
 	let scrollFrame = 0;
 	let slideFrame = 0;
 	let programmaticSlide = false;
@@ -98,7 +103,8 @@
 		{ id: 'support', label: 'Support', icon: 'family' },
 		{ id: 'history', label: 'History', icon: 'history' }
 	];
-	const webMcpToolCount = toolInventory().length;
+	const webMcpTools = toolInventory();
+	const webMcpToolCount = webMcpTools.length;
 
 	let selectedDate = $derived($ui.selectedDate);
 	let selectedDayForecast = $derived.by((): ForecastDay & { temperature?: number } => {
@@ -127,6 +133,8 @@
 	let activeReminders = $derived($household.reminders.filter((reminder) => reminder.status !== 'done'));
 	let activeReminder = $derived($household.reminders.find((reminder) => reminder.id === activeReminderId));
 	let activeReminderItem = $derived($household.commitments.find((item) => item.id === activeReminder?.commitmentId));
+	let replyAttentionItem = $derived($household.attentionItems.find((item) => item.id === replyAttentionId));
+	let replySource = $derived($household.sources.find((source) => source.id === replyAttentionItem?.sourceId));
 	let activePlan = $derived($household.plans.find((plan) => plan.id === $ui.activePlanId && plan.status === 'draft'));
 	let activeRoute = $derived($ui.showRouteForId ? routeForCommitment($household, $ui.showRouteForId) : undefined);
 	const weekStartDate = localDateKey();
@@ -303,13 +311,19 @@
 	}
 
 	function draftAttentionReply(attentionId: string): void {
-		const item = $household.attentionItems.find((candidate) => candidate.id === attentionId);
-		const ownerName = $household.preferences.ownerName.trim();
-		const signOff = ownerName ? `Kind regards, ${ownerName}.` : 'Kind regards.';
-		const message = item?.relatedCommitmentId
-			? `Hello, 09:00 is all right. Thank you for letting me know. ${signOff}`
-			: `Hello, the suggested substitute is fine. Thank you. ${signOff}`;
+		replyAttentionId = attentionId;
+	}
+
+	function reviewAttentionReply(message: string): void {
+		if (!replyAttentionId) return;
+		const attentionId = replyAttentionId;
+		replyAttentionId = undefined;
 		household.createAttentionReplyPlan(attentionId, message, gmailStatus.connected ? 'gmail_draft' : 'demo');
+	}
+
+	function closeTools(): void {
+		toolsOpen = false;
+		requestAnimationFrame(() => webMcpButton?.focus({ preventScroll: true }));
 	}
 
 	async function refreshGmailStatus(): Promise<void> {
@@ -567,18 +581,19 @@
 				<span aria-hidden="true"></span>
 				<span><strong>{gmailStatus.connected ? 'Gmail connected' : 'Fictional demo'}</strong><small>{gmailStatus.connected ? 'Drafts only · never sends' : 'No real messages sent'}</small></span>
 			</div>
-			<div
+			<button
+				bind:this={webMcpButton}
 				class="webmcp-indicator"
 				class:connected={$webMcpStatus.supported}
 				class:failed={$webMcpStatus.state === 'error'}
-				role="note"
 				aria-live="polite"
-				aria-label={`WebMCP: ${$webMcpStatus.state === 'connected' ? `${$webMcpStatus.registered} site tools connected` : $webMcpStatus.state === 'error' ? 'connection failed' : `${webMcpToolCount} site tools ready`}`}
+				aria-label={`Show WebMCP tools: ${$webMcpStatus.state === 'connected' ? `${$webMcpStatus.registered} site tools connected` : $webMcpStatus.state === 'error' ? 'connection failed' : `${webMcpToolCount} site tools ready`}`}
 				title={$webMcpStatus.message}
+				onclick={() => toolsOpen = true}
 			>
 				<span aria-hidden="true"></span>
 				<span><strong>Assistant ready</strong><small>{$webMcpStatus.state === 'connected' ? `WebMCP · ${$webMcpStatus.registered} tools connected` : $webMcpStatus.state === 'error' ? 'WebMCP unavailable' : `WebMCP · ${webMcpToolCount} tools ready`}</small></span>
-			</div>
+			</button>
 			<button class="display-button" onclick={() => displayOpen = true} aria-label="Open display settings"><span>Aa</span><strong>Display</strong></button>
 			<button class="privacy-button" onclick={() => privacyOpen = true} aria-label="Start privacy screensaver"><Icon name="shield" size={20} /><strong>Hide</strong></button>
 		</header>
@@ -776,3 +791,5 @@
 {#if privacyOpen}<PrivacyCover ownerName={$household.preferences.ownerName} location={privacyLocation} onUnlock={() => privacyOpen = false} />{/if}
 {#if weatherOpen}<WeatherForecastSheet date={selectedDate} forecast={selectedDayForecast} hours={boardForecast.hourly ?? []} onClose={() => weatherOpen = false} />{/if}
 {#if activeReminder && activeReminderItem}<ReminderSheet reminder={activeReminder} item={activeReminderItem} onResponse={(response) => household.respondToReminder(activeReminder!.id, response)} onClose={() => activeReminderId = undefined} />{/if}
+{#if toolsOpen}<ToolInventorySheet tools={webMcpTools} connected={$webMcpStatus.state === 'connected'} registered={$webMcpStatus.registered} onClose={closeTools} />{/if}
+{#if replyAttentionItem}<ReplyComposerSheet item={replyAttentionItem} source={replySource} onReview={reviewAttentionReply} onClose={() => replyAttentionId = undefined} />{/if}

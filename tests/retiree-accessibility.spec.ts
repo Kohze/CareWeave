@@ -368,6 +368,9 @@ test('exploratory pass covers control cycles and safe exits', async ({ page }, t
 		return Math.abs(strip.scrollLeft - Math.max(0, attention.offsetLeft - inset));
 	})).toBeLessThan(2);
 	await page.getByRole('button', { name: 'Prepare reply' }).first().click();
+	const replyComposer = page.getByRole('dialog', { name: /Reply to/ });
+	await replyComposer.getByLabel('Your reply').fill('Hello, the smaller bottle is fine. Thank you.');
+	await replyComposer.getByRole('button', { name: 'Review reply' }).click();
 	await expect(page.getByRole('button', { name: 'Keep things as they are' })).toBeFocused();
 	await page.getByRole('button', { name: 'Keep things as they are' }).click();
 	await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -460,6 +463,7 @@ test('real map fits the portrait iPad without horizontal overflow', async ({ pag
 test('shows all seven days in one scrollable column on a portrait iPad', async ({ page }, testInfo) => {
 	test.skip(testInfo.project.name !== 'ipad-portrait', 'Portrait-specific layout check.');
 	await page.getByRole('button', { name: '7 days', exact: true }).click();
+	await waitForViewToSettle(page, '.week-column');
 	await expect(page.getByRole('heading', { name: 'Next 7 days' })).toBeVisible();
 	expect(await page.locator('.week-grid > button').count()).toBe(7);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(768);
@@ -468,6 +472,13 @@ test('shows all seven days in one scrollable column on a portrait iPad', async (
 	const weekScroll = await page.locator('.week-column').evaluate((column) => ({ scrollHeight: column.scrollHeight, clientHeight: column.clientHeight }));
 	expect(weekScroll.scrollHeight).toBeGreaterThan(weekScroll.clientHeight);
 	await page.screenshot({ path: 'artifacts/audit-final-ipad-portrait.png' });
+	await page.locator('.week-column').evaluate((column) => column.scrollTo({ top: column.scrollHeight }));
+	const weekGrid = page.locator('.week-grid');
+	const pharmacyPlan = weekGrid.locator('.week-event').filter({ hasText: 'Prescription delivery window' });
+	await expect(weekGrid.locator('.week-event').filter({ hasText: 'Physiotherapy video call' })).toHaveCount(1);
+	await expect(weekGrid.locator('.week-event').filter({ hasText: 'Coffee at the community hub' })).toHaveCount(1);
+	await expect(pharmacyPlan).toBeVisible();
+	await page.screenshot({ path: 'artifacts/audit-final-demo-week-future.png' });
 });
 
 test('mobile keeps every visible control at least 44 pixels', async ({ page }, testInfo) => {
