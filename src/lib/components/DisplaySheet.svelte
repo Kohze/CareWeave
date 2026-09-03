@@ -40,7 +40,7 @@
 
 <dialog bind:this={dialog} class="display-sheet" aria-labelledby="display-title" oncancel={(event) => { event.preventDefault(); close(); }}>
 	<div class="panel-heading">
-		<div><span class="eyebrow">Make ClearDay comfortable</span><h2 id="display-title">Display settings</h2></div>
+		<div><span class="eyebrow">Make CareWeave comfortable</span><h2 id="display-title">Display settings</h2></div>
 		<button bind:this={closeButton} class="icon-button" aria-label="Close display settings" onclick={close}>×</button>
 	</div>
 

@@ -6,7 +6,7 @@ Secondary surface: 390×844 mobile fallback
 
 ## Standard and method
 
-The audit uses the W3C Web Accessibility Initiative's [guidance for older users](https://www.w3.org/WAI/older-users/), [WCAG 2.2](https://www.w3.org/TR/WCAG22/), the [24×24 CSS pixel AA target minimum](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum), and the WAI guidance on [resizable text for older users](https://www.w3.org/WAI/older-users/developing/). ClearDay deliberately sets a stronger product floor of 44×44 pixels for visible controls and 14px for secondary prose.
+The audit uses the W3C Web Accessibility Initiative's [guidance for older users](https://www.w3.org/WAI/older-users/), [WCAG 2.2](https://www.w3.org/TR/WCAG22/), the [24×24 CSS pixel AA target minimum](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum), and the WAI guidance on [resizable text for older users](https://www.w3.org/WAI/older-users/developing/). CareWeave deliberately sets a stronger product floor of 44×44 pixels for visible controls and 14px for secondary prose.
 
 Evidence came from four passes:
 
@@ -29,20 +29,20 @@ This is an expert standards and cognitive-walkthrough audit, not a substitute fo
 | Text resizing | No in-app text control | Added persistent Comfortable/Extra large settings and verified 200% browser text reflow | No horizontal overflow at 200% text size |
 | Contrast | Contrast preference existed only in the data model | Added an obvious Display control and persistent high-contrast mode | Automated text checks pass WCAG AA across all five main views |
 | Keyboard and focus | Custom modal markup did not focus a safe action or return focus | Replaced overlays with native modal dialogs; focus defaults to the non-destructive action; Escape safely closes; focus returns to opener | Covered by browser regression tests |
-| Voice promise | “Talk to ClearDay” opened an explanation but did not listen | Added browser push-to-talk for core commands, visible transcripts and responses, slower spoken feedback, tappable examples, and a plain ChatGPT fallback | Voice route example changes the shared board and gives an audible/visible leave time |
-| Message comprehension | Copy called email “untrusted,” a security term without a user explanation | Reworded it: messages can be wrong or misleading, so ClearDay waits for review | Risk and protection are stated in everyday language |
-| Truthful feedback | Sandbox state said `sent_demo`, which could imply a clinic received mail | Renamed it `saved_demo` and now states “No real email was sent” | Test outbox cannot be mistaken for delivery confirmation |
+| Voice promise | “Talk to CareWeave” opened an explanation but did not listen | Added browser push-to-talk for core commands, visible transcripts and responses, slower spoken feedback, tappable examples, and a plain ChatGPT fallback | Voice route example changes the shared board and gives an audible/visible leave time |
+| Message comprehension | Copy called email “untrusted,” a security term without a user explanation | Reworded it: messages can be wrong or misleading, so CareWeave waits for review | Risk and protection are stated in everyday language |
+| Truthful feedback | Sandbox state said `sent_demo`, which could imply a clinic received mail | Renamed it `saved_demo` and now labels the item “local suggestion — not sent” | A local suggestion cannot be mistaken for delivery confirmation |
 | Slow review | Draft plans expired after 30 minutes | Increased expiry to two hours; state-revision checks still prevent stale execution | Less time pressure without weakening correctness |
 | Misleading information | Header showed hard-coded sunny weather | Removed weather until a live, timestamped provider exists | No false travel/weather cue remains |
 | Destructive recovery | Reset acted immediately | Added explicit reset confirmation | Accidental reset requires a second deliberate action |
 | Stale information | A cached board could look current | Added current, delayed, and offline states to Today, Support, and agent tools | Reassurance is withheld when required feeds are stale or offline |
 | Reminder overload | Plans had no acknowledgement or recovery loop | Added Done, Remind me later, and I need help only inside eligible event details | The everyday dayboard stays calm while help ownership is explicit |
 | Shared-room privacy | Health details stayed visible on a wall iPad | Added a one-tap privacy cover that visually and semantically hides the board | Visitors and assistive technology cannot read covered content |
-| Urgent confusion | The product had no explicit emergency boundary | Added direct supporter/emergency telephone handoff and states that ClearDay does not monitor emergencies | Help is reachable without implying detection or clinical coverage |
+| Urgent confusion | The product had no explicit emergency boundary | Added direct supporter/emergency telephone handoff and states that CareWeave does not monitor emergencies | Help is reachable without implying detection or clinical coverage |
 
 ## Goal-fit assessment
 
-ClearDay now matches the intended product rather than resembling a conventional calendar with larger fonts:
+CareWeave now matches the intended product rather than resembling a conventional calendar with larger fonts:
 
 - General input becomes calm output: normalized email actions, health, care, food, shopping, and travel converge on the same dayboard.
 - The first screen answers “What day is it?”, “What is happening?”, “What needs attention?”, and “Am I prepared?”

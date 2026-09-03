@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handleRealtimeSession } from '../../api/realtime/session';
 
 function request(headers: Record<string, string> = {}, body = 'v=0\r\n'): Request {
-	return new Request('https://clearday.example/api/realtime/session', {
+	return new Request('https://careweave.example/api/realtime/session', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/sdp',
-			Origin: 'https://clearday.example',
+			Origin: 'https://careweave.example',
 			'x-forwarded-for': crypto.randomUUID(),
 			...headers
 		},

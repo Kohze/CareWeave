@@ -2,12 +2,12 @@ declare global {
   namespace App {}
 
   interface Window {
-    __clearDayWebMcpController?: AbortController;
-    SpeechRecognition?: new () => ClearDaySpeechRecognition;
-    webkitSpeechRecognition?: new () => ClearDaySpeechRecognition;
+    __careWeaveWebMcpController?: AbortController;
+    SpeechRecognition?: new () => CareWeaveSpeechRecognition;
+    webkitSpeechRecognition?: new () => CareWeaveSpeechRecognition;
   }
 
-  interface ClearDaySpeechRecognition {
+  interface CareWeaveSpeechRecognition {
     continuous: boolean;
     interimResults: boolean;
     lang: string;

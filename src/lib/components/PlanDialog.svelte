@@ -60,6 +60,6 @@
 		{#if error}<p class="dialog-error" role="alert"><strong>Nothing changed.</strong> {error}</p>{/if}
 		<div class="dialog-actions">
 			<button bind:this={safeButton} class="secondary-button" onclick={discard} disabled={saving}>Keep things as they are</button>
-			<button class="primary-button" onclick={approve} disabled={saving}>{saving ? 'Creating draft…' : plan.deliveryMode === 'gmail_draft' ? 'Create Gmail draft' : 'Save this demo message'}</button>
+			<button class="primary-button" onclick={approve} disabled={saving}>{saving ? 'Creating draft…' : plan.deliveryMode === 'gmail_draft' ? 'Create Gmail draft' : 'Save suggested message'}</button>
 		</div>
 </dialog>

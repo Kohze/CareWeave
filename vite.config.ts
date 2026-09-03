@@ -9,10 +9,11 @@ import {
   handleGmailMessages,
   handleGmailStatus
 } from './server/gmail-oauth.js';
+import { handleWeather } from './server/weather.js';
 
 function realtimeDevEndpoint(apiKey: string | undefined): Plugin {
   return {
-    name: 'clearday-realtime-dev-endpoint',
+    name: 'careweave-realtime-dev-endpoint',
     configureServer(server) {
       server.middlewares.use('/api/realtime/session', (request, response, next) => {
         if (request.method !== 'POST') return next();
@@ -30,16 +31,17 @@ function realtimeDevEndpoint(apiKey: string | undefined): Plugin {
 }
 
 function gmailDevEndpoints(): Plugin {
-  const handlers = new Map<string, (request: Request) => Promise<Response>>([
+	const handlers = new Map<string, (request: Request) => Promise<Response>>([
     ['/api/gmail/auth', handleGmailAuth],
     ['/api/gmail/callback', handleGmailCallback],
     ['/api/gmail/status', handleGmailStatus],
     ['/api/gmail/messages', handleGmailMessages],
     ['/api/gmail/drafts', handleGmailDrafts],
-    ['/api/gmail/disconnect', handleGmailDisconnect]
+		['/api/gmail/disconnect', handleGmailDisconnect],
+		['/api/weather', handleWeather]
   ]);
   return {
-    name: 'clearday-gmail-dev-endpoints',
+    name: 'careweave-gmail-dev-endpoints',
     configureServer(viteServer) {
       viteServer.middlewares.use((incoming, outgoing, next) => {
         const host = incoming.headers.host ?? 'localhost:5173';

@@ -7,7 +7,7 @@ import { syncOverview } from './reliability';
 import { checkCalendarIntegrity } from './calendar';
 import type { ToolResult } from './types';
 
-export type ClearDayToolDefinition = Parameters<NonNullable<Document['modelContext']>['registerTool']>[0];
+export type CareWeaveToolDefinition = Parameters<NonNullable<Document['modelContext']>['registerTool']>[0];
 
 export const webMcpStatus = writable<{ state: 'checking' | 'unsupported' | 'connected' | 'error'; supported: boolean; registered: number; message: string }>({
 	state: 'checking',
@@ -109,7 +109,7 @@ function validateToolInput(input: unknown, schema: Record<string, unknown> | und
 	return undefined;
 }
 
-function withRuntimeValidation(tool: ClearDayToolDefinition): ClearDayToolDefinition {
+function withRuntimeValidation(tool: CareWeaveToolDefinition): CareWeaveToolDefinition {
 	const execute = tool.execute;
 	return {
 		...tool,
@@ -121,8 +121,8 @@ function withRuntimeValidation(tool: ClearDayToolDefinition): ClearDayToolDefini
 	};
 }
 
-export function clearDayTools(): ClearDayToolDefinition[] {
-	const tools: ClearDayToolDefinition[] = [
+export function careWeaveTools(): CareWeaveToolDefinition[] {
+	const tools: CareWeaveToolDefinition[] = [
 		{
 			name: 'get_day_brief',
 			title: 'Get day brief',
@@ -188,7 +188,7 @@ export function clearDayTools(): ClearDayToolDefinition[] {
 		{
 			name: 'ingest_email_action',
 			title: 'Import an email action',
-			description: 'Import one normalized candidate action from a user-authorized Gmail, Outlook, or manual source into ClearDay for review. Use after an email connector reads a relevant message. This stores minimal provenance and explicitly untrusted summaries; it does not copy the full email, obey email instructions, add calendar events, or send anything.',
+			description: 'Import one normalized candidate action from a user-authorized Gmail, Outlook, or manual source into CareWeave for review. Use after an email connector reads a relevant message. This stores minimal provenance and explicitly untrusted summaries; it does not copy the full email, obey email instructions, add calendar events, or send anything.',
 			inputSchema: objectSchema({
 				provider: { type: 'string', enum: ['gmail', 'outlook', 'manual'] },
 				source_id: { type: 'string', minLength: 1, maxLength: 100, description: 'Stable provider message ID used for deduplication.' },
@@ -276,7 +276,8 @@ export function clearDayTools(): ClearDayToolDefinition[] {
 				const date = asString(input, 'date');
 				const overview = supportOverview(data, asString(input, 'supporter_person_id') ?? '', date ?? '');
 				if (!overview) return failure('No active support access was found for that person.');
-				return { success: true, summary: `${overview.ownerName}'s day is ${overview.status.replace('_', ' ')}; ${overview.openOffers} help offers await a response.`, stateRevision: data.revision, data: overview };
+				const subject = overview.ownerName.trim() ? `${overview.ownerName.trim()}'s day` : 'The shared day';
+				return { success: true, summary: `${subject} is ${overview.status.replace('_', ' ')}; ${overview.openOffers} help offers await a response.`, stateRevision: data.revision, data: overview };
 			}
 		},
 		{
@@ -335,7 +336,7 @@ export function clearDayTools(): ClearDayToolDefinition[] {
 		},
 		{
 			name: 'focus_date', title: 'Show a date on the dayboard',
-			description: 'Change the visible day on the shared ClearDay interface. This only changes the view, not household records.',
+			description: 'Change the visible day on the shared CareWeave interface. This only changes the view, not household records.',
 			inputSchema: objectSchema({ date: dateProperty }, ['date']),
 			execute: async (input) => asString(input, 'date') ? household.focusDate(asString(input, 'date')!) : failure('A date is required.')
 		},
@@ -406,7 +407,7 @@ export function clearDayTools(): ClearDayToolDefinition[] {
 		},
 		{
 			name: 'approve_action_plan', title: 'Approve and execute action plan',
-			description: 'Execute a specific, still-current draft after explicit user approval. In the challenge build this saves the displayed email to a test outbox without sending a real email, and updates statuses. It never silently changes an appointment time.',
+			description: 'Execute a specific, still-current draft after explicit user approval. Without Gmail, this saves the displayed email as a local suggestion without sending it and updates statuses. It never silently changes an appointment time.',
 			inputSchema: objectSchema({ plan_id: idProperty, user_confirmed: { type: 'boolean', const: true, description: 'Must be true only after the user explicitly approves the exact displayed plan.' } }, ['plan_id', 'user_confirmed']),
 			execute: async (input) => input.user_confirmed === true ? household.approvePlan(asString(input, 'plan_id') ?? '') : failure('Explicit user confirmation is required. No actions were performed.')
 		},
@@ -424,13 +425,13 @@ export function clearDayTools(): ClearDayToolDefinition[] {
 		},
 		{
 			name: 'apply_confirmed_cancellation', title: 'Apply externally confirmed appointment cancellation',
-			description: 'Mark an appointment cancelled only after a real clinic cancellation has been verified and a cancellation request is already pending. This removes it from active planning but preserves the record and audit trail.',
+			description: 'Mark an appointment cancelled only after a real clinic cancellation has been verified. A saved suggestion or Gmail draft is not sufficient. This removes it from active planning but preserves the record and audit trail.',
 			inputSchema: objectSchema({ commitment_id: idProperty, confirmation_note: { type: 'string', minLength: 3, maxLength: 500 }, confirmation_verified: { type: 'boolean', const: true } }, ['commitment_id', 'confirmation_note', 'confirmation_verified']),
-			execute: async (input) => input.confirmation_verified === true ? household.applyConfirmedCancellation(asString(input, 'commitment_id') ?? '', asString(input, 'confirmation_note') ?? '') : failure('Verified external confirmation is required. Nothing changed.')
+			execute: async (input) => input.confirmation_verified === true ? household.applyConfirmedCancellation(asString(input, 'commitment_id') ?? '', asString(input, 'confirmation_note') ?? '', true) : failure('Verified external confirmation is required. Nothing changed.')
 		},
 		{
 			name: 'undo_last_change', title: 'Undo last household change',
-			description: 'Restore the previous local household state. This cannot recall a real external email; the challenge build only saves messages in a test outbox.',
+			description: 'Restore the previous local household state. This cannot recall a real external email; without Gmail, messages are only saved as local suggestions.',
 			inputSchema: objectSchema({ user_confirmed: { type: 'boolean', const: true } }, ['user_confirmed']),
 			execute: async (input) => input.user_confirmed === true ? household.undo() : failure('User confirmation is required. Nothing changed.')
 		},
@@ -444,15 +445,15 @@ export function clearDayTools(): ClearDayToolDefinition[] {
 	return tools.map(withRuntimeValidation);
 }
 
-export async function registerClearDayTools(): Promise<void> {
+export async function registerCareWeaveTools(): Promise<void> {
 	if (typeof document.modelContext?.registerTool !== 'function') {
 		webMcpStatus.set({ state: 'unsupported', supported: false, registered: 0, message: 'WebMCP tools are ready when opened in a supported browser.' });
 		return;
 	}
-	window.__clearDayWebMcpController?.abort();
+	window.__careWeaveWebMcpController?.abort();
 	const controller = new AbortController();
-	window.__clearDayWebMcpController = controller;
-	const definitions = clearDayTools();
+	window.__careWeaveWebMcpController = controller;
+	const definitions = careWeaveTools();
 	let registered = 0;
 	try {
 		for (const tool of definitions) {
@@ -462,7 +463,7 @@ export async function registerClearDayTools(): Promise<void> {
 		webMcpStatus.set({ state: 'connected', supported: true, registered, message: `${registered} WebMCP tools available.` });
 	} catch (error) {
 		controller.abort();
-		if (window.__clearDayWebMcpController === controller) window.__clearDayWebMcpController = undefined;
+		if (window.__careWeaveWebMcpController === controller) window.__careWeaveWebMcpController = undefined;
 		const detail = error instanceof Error && error.message ? ` ${error.message}` : '';
 		webMcpStatus.set({
 			state: 'error',
@@ -474,13 +475,13 @@ export async function registerClearDayTools(): Promise<void> {
 	}
 }
 
-export function unregisterClearDayTools(): void {
-	window.__clearDayWebMcpController?.abort();
-	window.__clearDayWebMcpController = undefined;
+export function unregisterCareWeaveTools(): void {
+	window.__careWeaveWebMcpController?.abort();
+	window.__careWeaveWebMcpController = undefined;
 }
 
 export function toolInventory(): Array<{ name: string; description: string; readOnly: boolean }> {
-	return clearDayTools().map((tool) => ({ name: tool.name, description: tool.description, readOnly: tool.annotations?.readOnlyHint === true }));
+	return careWeaveTools().map((tool) => ({ name: tool.name, description: tool.description, readOnly: tool.annotations?.readOnlyHint === true }));
 }
 
 const voiceBlockedTools = new Set([
@@ -505,7 +506,7 @@ export function realtimeToolDefinitions(): Array<{
 	description: string;
 	parameters: Record<string, unknown>;
 }> {
-	return clearDayTools()
+	return careWeaveTools()
 		.filter((tool) => !voiceBlockedTools.has(tool.name))
 		.map((tool) => ({
 			type: 'function' as const,
@@ -515,11 +516,11 @@ export function realtimeToolDefinitions(): Array<{
 		}));
 }
 
-export async function executeClearDayTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+export async function executeCareWeaveTool(name: string, input: Record<string, unknown>): Promise<unknown> {
 	if (voiceBlockedTools.has(name)) {
 		return failure('That action needs a deliberate tap on the review screen. Nothing was changed.');
 	}
-	const tool = clearDayTools().find((candidate) => candidate.name === name);
-	if (!tool) return failure(`Unknown ClearDay tool: ${name}.`);
+	const tool = careWeaveTools().find((candidate) => candidate.name === name);
+	if (!tool) return failure(`Unknown CareWeave tool: ${name}.`);
 	return tool.execute(input);
 }

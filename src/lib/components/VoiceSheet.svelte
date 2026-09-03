@@ -43,14 +43,14 @@
 		<span class="eyebrow">{supported ? 'Conversational voice' : 'Voice needs a modern browser'}</span>
 		<h2 id="voice-title">What would you like help with?</h2>
 		{#if supported}
-			<p>Start once, then have a normal back-and-forth conversation. You can interrupt ClearDay. Messages and appointment changes always need a tap on the review screen.</p>
+			<p>Start once, then have a normal back-and-forth conversation. You can interrupt CareWeave. Messages and appointment changes always need a tap on the review screen.</p>
 			<button bind:this={conversationButton} class="listen-button" class:listening={active} onclick={onConversation} disabled={status === 'connecting'}><Icon name="mic" size={27} /> {status === 'connecting' ? 'Connecting…' : buttonLabel}</button>
 			<div class="voice-status" data-status={status} aria-live="polite"><span aria-hidden="true"></span><strong>{status === 'idle' ? 'Ready' : status === 'error' ? 'Could not connect' : status}</strong><p>{statusMessage}</p></div>
 		{:else}
-			<p>This browser cannot run the embedded conversation. Open ClearDay in a WebMCP-capable ChatGPT browser to use its website tools, or use one of the examples below.</p>
+			<p>This browser cannot run the embedded conversation. Open CareWeave in a WebMCP-capable ChatGPT browser to use its website tools, or use one of the examples below.</p>
 		{/if}
 		{#if transcript}<p class="heard"><strong>You:</strong> “{transcript}”</p>{/if}
-		{#if response}<p class="voice-response" aria-live="polite"><strong>ClearDay:</strong> {response}</p>{/if}
+		{#if response}<p class="voice-response" aria-live="polite"><strong>CareWeave:</strong> {response}</p>{/if}
 		<div class="suggestions">
 			<button onclick={() => onExample('What do I need to do today?')}>“What do I need to do today?”</button>
 			<button onclick={() => onExample('When should I leave for the doctor?')}>“When should I leave for the doctor?”</button>

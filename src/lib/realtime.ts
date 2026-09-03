@@ -1,4 +1,4 @@
-import { executeClearDayTool, realtimeToolDefinitions } from './webmcp';
+import { executeCareWeaveTool, realtimeToolDefinitions } from './webmcp';
 import type { ToolResult } from './types';
 
 export type VoiceStatus = 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error';
@@ -18,7 +18,7 @@ type RealtimeEvent = {
 	response?: { output?: Array<{ type?: string; name?: string; call_id?: string; arguments?: string; content?: Array<{ transcript?: string; text?: string }> }> };
 };
 
-const instructions = `You are ClearDay, a calm household planning companion for an older adult using a wall-mounted iPad.
+const instructions = `You are CareWeave, a calm household planning companion for an older adult using a wall-mounted iPad.
 Speak in short, warm sentences. Ask only one clarification at a time. Always use the provided tools for household facts; never guess dates, appointments, routes, food, carers, or messages.
 Check information freshness before reassuring the person that everything is on track. Say clearly when a feed is delayed or the board is offline.
 When mentioning a date or time, say it clearly and repeat it if it is important. Tell the person whenever the visible board changes.
@@ -28,7 +28,7 @@ You cannot approve, send, apply confirmed changes, reset data, or undo by voice.
 You may mark an ordinary reminder done, postpone it, or ask the trusted support circle for help when the person clearly requests that. Never treat a reminder response as proof of medication adherence and never claim to monitor emergencies.
 If the user says stop, pause, or never mind, stop the current task. Never pressure the user to approve anything.`;
 
-export class ClearDayRealtimeVoice {
+export class CareWeaveRealtimeVoice {
 	private peer?: RTCPeerConnection;
 	private channel?: RTCDataChannel;
 	private stream?: MediaStream;
@@ -160,7 +160,7 @@ export class ClearDayRealtimeVoice {
 		if ((event.type === 'response.output_audio_transcript.delta' || event.type === 'response.audio_transcript.delta') && event.delta) {
 			this.assistantTranscript += event.delta;
 			this.callbacks.onAssistantTranscript(this.assistantTranscript);
-			this.callbacks.onStatus('speaking', 'ClearDay is speaking. You can interrupt at any time.');
+			this.callbacks.onStatus('speaking', 'CareWeave is speaking. You can interrupt at any time.');
 		}
 		if (event.type === 'response.done') void this.finishResponse(event);
 		if (event.type === 'error') this.fail(event.error?.message ?? 'The voice service reported an error.');
@@ -184,7 +184,7 @@ export class ClearDayRealtimeVoice {
 			} catch {
 				args = {};
 			}
-			const result = await executeClearDayTool(call.name!, args);
+			const result = await executeCareWeaveTool(call.name!, args);
 			this.callbacks.onToolResult(call.name!, result);
 			this.send({
 				type: 'conversation.item.create',
@@ -200,7 +200,7 @@ export class ClearDayRealtimeVoice {
 
 	private friendlyError(message: string): string {
 		if (/notallowed|permission|denied/i.test(message)) return 'Microphone permission was not granted. Allow microphone access, then try again.';
-		if (/not configured|OPENAI_API_KEY/i.test(message)) return 'Conversational voice is not configured on this server yet. Add the server API key, then restart ClearDay.';
+		if (/not configured|OPENAI_API_KEY/i.test(message)) return 'Conversational voice is not configured on this server yet. Add the server API key, then restart CareWeave.';
 		return 'I could not start conversational voice. Check the connection and try again.';
 	}
 }

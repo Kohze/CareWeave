@@ -37,11 +37,11 @@ afterEach(() => {
 
 describe('Gmail OAuth server boundary', () => {
 	it('creates a PKCE authorization redirect and an HttpOnly state cookie', async () => {
-		const response = await handleGmailAuth(new Request('https://clearday.example/api/gmail/auth'));
+		const response = await handleGmailAuth(new Request('https://careweave.example/api/gmail/auth'));
 		const location = new URL(response.headers.get('location')!);
 		expect(response.status).toBe(302);
 		expect(location.origin).toBe('https://accounts.google.com');
-		expect(location.searchParams.get('redirect_uri')).toBe('https://clearday.example/api/gmail/callback');
+		expect(location.searchParams.get('redirect_uri')).toBe('https://careweave.example/api/gmail/callback');
 		expect(location.searchParams.get('code_challenge_method')).toBe('S256');
 		expect(location.searchParams.get('scope')).toContain('gmail.readonly');
 		expect(location.searchParams.get('scope')).toContain('gmail.compose');
@@ -51,7 +51,7 @@ describe('Gmail OAuth server boundary', () => {
 	});
 
 	it('reports configuration and connection without exposing the refresh token', async () => {
-		const response = await handleGmailStatus(new Request('https://clearday.example/api/gmail/status', {
+		const response = await handleGmailStatus(new Request('https://careweave.example/api/gmail/status', {
 			headers: { cookie: tokenCookie() }
 		}));
 		const body = await response.json();
@@ -62,7 +62,7 @@ describe('Gmail OAuth server boundary', () => {
 	it('rejects cross-origin draft creation before calling Google', async () => {
 		const fetchMock = vi.fn();
 		vi.stubGlobal('fetch', fetchMock);
-		const response = await handleGmailDrafts(new Request('https://clearday.example/api/gmail/drafts', {
+		const response = await handleGmailDrafts(new Request('https://careweave.example/api/gmail/drafts', {
 			method: 'POST',
 			headers: { origin: 'https://attacker.example', 'content-type': 'application/json', cookie: tokenCookie() },
 			body: JSON.stringify({ to: 'clinic@example.com', subject: 'Hello', body: 'Test' })
@@ -76,9 +76,9 @@ describe('Gmail OAuth server boundary', () => {
 			.mockResolvedValueOnce(new Response(JSON.stringify({ access_token: 'short-lived-access-token' }), { status: 200 }))
 			.mockResolvedValueOnce(new Response(JSON.stringify({ id: 'draft-1', message: { id: 'message-1' } }), { status: 200 }));
 		vi.stubGlobal('fetch', fetchMock);
-		const response = await handleGmailDrafts(new Request('https://clearday.example/api/gmail/drafts', {
+		const response = await handleGmailDrafts(new Request('https://careweave.example/api/gmail/drafts', {
 			method: 'POST',
-			headers: { origin: 'https://clearday.example', 'content-type': 'application/json', cookie: tokenCookie() },
+			headers: { origin: 'https://careweave.example', 'content-type': 'application/json', cookie: tokenCookie() },
 			body: JSON.stringify({ to: 'clinic@example.com', subject: 'Appointment', body: 'Please offer another time.' })
 		}));
 		expect(response.status).toBe(200);
@@ -100,7 +100,7 @@ describe('Gmail OAuth server boundary', () => {
 				] }
 			}), { status: 200 }));
 		vi.stubGlobal('fetch', fetchMock);
-		const response = await handleGmailMessages(new Request('https://clearday.example/api/gmail/messages?limit=1', {
+		const response = await handleGmailMessages(new Request('https://careweave.example/api/gmail/messages?limit=1', {
 			headers: { cookie: tokenCookie() }
 		}));
 		const body = await response.json();

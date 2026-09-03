@@ -1,7 +1,24 @@
 <script lang="ts">
+	import HandHeart from '@lucide/svelte/icons/hand-heart';
+	import UsersRound from '@lucide/svelte/icons/users-round';
+	import CircleHelp from '@lucide/svelte/icons/circle-help';
+	import Siren from '@lucide/svelte/icons/siren';
+	import PhoneCall from '@lucide/svelte/icons/phone-call';
+
 	let { name, size = 24 }: { name: string; size?: number } = $props();
 </script>
 
+{#if name === 'care-visit'}
+	<HandHeart class="icon professional-icon care-visit-icon" {size} strokeWidth={1.8} aria-hidden="true" />
+{:else if name === 'who'}
+	<UsersRound class="icon professional-icon who-icon" {size} strokeWidth={1.8} aria-hidden="true" />
+{:else if name === 'help'}
+	<CircleHelp class="icon professional-icon help-icon" {size} strokeWidth={1.8} aria-hidden="true" />
+{:else if name === 'emergency'}
+	<Siren class="icon professional-icon emergency-icon" {size} strokeWidth={1.8} aria-hidden="true" />
+{:else if name === 'phone'}
+	<PhoneCall class="icon professional-icon phone-icon" {size} strokeWidth={1.8} aria-hidden="true" />
+{:else}
 <svg class="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 	{#if name === 'sun'}
 		<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>
@@ -37,7 +54,10 @@
 		<path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6"/>
 	{:else if name === 'shield'}
 		<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/>
+	{:else if name === 'settings'}
+		<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.97 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.52-1.03H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06a1.7 1.7 0 0 0 1.88.34H9A1.7 1.7 0 0 0 10 3.08V3h4v.08a1.7 1.7 0 0 0 1.03 1.52 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 7l-.06.06a1.7 1.7 0 0 0-.34 1.88v.03A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"/>
 	{:else}
 		<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/>
 	{/if}
 </svg>
+{/if}

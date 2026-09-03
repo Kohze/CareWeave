@@ -3,10 +3,18 @@ import AxeBuilder from '@axe-core/playwright';
 
 test.beforeEach(async ({ page }) => {
 	await page.route('https://tile.openstreetmap.org/**', (request) => request.abort());
+	await page.route('**/api/weather**', async (route) => {
+		const today = new Date().toISOString().slice(0, 10);
+		const days = Array.from({ length: 7 }, (_, index) => new Date(`${today}T12:00:00Z`).getTime() + index * 86_400_000).map((time) => new Date(time).toISOString().slice(0, 10));
+		await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+			current: { time: `${today}T14:00`, temperature_2m: 14, precipitation: .7, weather_code: 61, cloud_cover: 91, wind_speed_10m: 18 },
+			daily: { time: days, weather_code: [61, 2, 3, 0, 80, 1, 51], temperature_2m_max: [16, 18, 17, 20, 15, 19, 17], temperature_2m_min: [9, 10, 11, 12, 8, 10, 9], precipitation_probability_max: [78, 24, 18, 5, 62, 12, 48] }
+		}) });
+	});
 	await page.addInitScript(() => {
-		if (!sessionStorage.getItem('clearday-test-ready')) {
+		if (!sessionStorage.getItem('careweave-test-ready')) {
 			localStorage.clear();
-			sessionStorage.setItem('clearday-test-ready', 'true');
+			sessionStorage.setItem('careweave-test-ready', 'true');
 		}
 	});
 	await page.goto('/');
@@ -31,14 +39,17 @@ test('uses readable text, forgiving targets, and a complete iPad week', async ({
 			.filter(visible)
 			.map((element) => element.getBoundingClientRect())
 			.filter((rect) => rect.width < 44 || rect.height < 44);
-		const finalCard = document.querySelector('.event-card:last-child')?.getBoundingClientRect();
-		const voiceBar = document.querySelector('.voice-bar')?.getBoundingClientRect();
-		return { proseBelow14px, controlsBelow44px, finalCardBottom: finalCard?.bottom, voiceBarTop: voiceBar?.top };
+		const todayColumn = document.querySelector('.today-column');
+		return {
+			proseBelow14px,
+			controlsBelow44px,
+			todayCanScroll: !!todayColumn && todayColumn.scrollHeight > todayColumn.clientHeight
+		};
 	});
 
 	expect(initialAudit.proseBelow14px).toEqual([]);
 	expect(initialAudit.controlsBelow44px).toEqual([]);
-	expect(initialAudit.finalCardBottom).toBeLessThanOrEqual(initialAudit.voiceBarTop!);
+	expect(initialAudit.todayCanScroll).toBe(true);
 	await expect(page.getByText(/Wednesday|Thursday|Friday|Saturday|Sunday|Monday|Tuesday/).first()).toBeVisible();
 	await page.screenshot({ path: 'artifacts/audit-final-ipad-landscape.png' });
 
@@ -46,7 +57,12 @@ test('uses readable text, forgiving targets, and a complete iPad week', async ({
 	const viewport = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, width: innerWidth }));
 	expect(viewport.scrollWidth).toBe(viewport.width);
 	await expect(page.locator('.week-grid > button')).toHaveCount(7);
+	const weekScroll = await page.locator('.week-column').evaluate((column) => ({ scrollHeight: column.scrollHeight, clientHeight: column.clientHeight }));
+	expect(weekScroll.scrollHeight).toBeGreaterThan(weekScroll.clientHeight);
 	await page.screenshot({ path: 'artifacts/audit-final-next-7-days.png' });
+	const finalDay = page.locator('.week-grid > button').last();
+	await finalDay.scrollIntoViewIfNeeded();
+	await expect(finalDay).toBeVisible();
 });
 
 test('calendar events open complete details and clearly track selection', async ({ page }, testInfo) => {
@@ -114,7 +130,7 @@ test('calendar events open complete details and clearly track selection', async 
 
 test('offers persistent large text and high contrast with focus returned to the opener', async ({ page }, testInfo) => {
 	test.skip(testInfo.project.name !== 'ipad-landscape', 'Measured once at the wall-iPad viewport.');
-	const opener = page.getByRole('button', { name: 'Open display settings' });
+	const opener = page.getByRole('button', { name: 'Open settings' });
 	await opener.click();
 	const displayDialog = page.getByRole('dialog', { name: 'Display settings' });
 	await expect(displayDialog).toBeVisible();
@@ -180,7 +196,7 @@ test('offers a keyboard bypass and clearly identifies the current view', async (
 
 test('voice examples give a plain-language answer and update the shared board', async ({ page }, testInfo) => {
 	test.skip(testInfo.project.name !== 'ipad-landscape', 'Voice UI is exercised once; speech recognition itself is browser-provided.');
-	await page.getByRole('button', { name: /Talk to ClearDay/ }).click();
+	await page.getByRole('button', { name: /Talk to CareWeave/ }).click();
 	await expect(page.getByRole('dialog', { name: 'What would you like help with?' })).toBeVisible();
 	await page.getByRole('button', { name: '“When should I leave for the doctor?”' }).click();
 	await expect(page.locator('.voice-response')).toContainText(/leave at 10:37/i);
@@ -268,7 +284,7 @@ test('keeps every visible control large enough in all views and dialogs', async 
 	await page.getByRole('button', { name: 'Open display settings' }).click();
 	await assertTargets('Display dialog');
 	await page.getByRole('button', { name: 'Close display settings' }).click();
-	await page.getByRole('button', { name: /Talk to ClearDay/ }).click();
+	await page.getByRole('button', { name: /Talk to CareWeave/ }).click();
 	await assertTargets('Voice dialog');
 });
 
@@ -279,7 +295,7 @@ test('keeps dialogs semantically accessible and motion optional', async ({ page 
 	let results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
 	expect(results.violations).toEqual([]);
 	await page.getByRole('button', { name: 'Close display settings' }).click();
-	await page.getByRole('button', { name: /Talk to ClearDay/ }).click();
+	await page.getByRole('button', { name: /Talk to CareWeave/ }).click();
 	results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
 	expect(results.violations).toEqual([]);
 	expect(await page.locator('.voice-orb').evaluate((node) => getComputedStyle(node).animationName)).toBe('none');
@@ -301,10 +317,12 @@ test('keeps support, urgent-help, and privacy dialogs accessible', async ({ page
 	expect(results.violations, 'Urgent-help dialog accessibility violations').toEqual([]);
 	await page.getByRole('button', { name: 'Close urgent help' }).click();
 
-	await page.getByRole('button', { name: 'Hide private details' }).click();
+	await page.getByRole('button', { name: 'Start privacy screensaver' }).click();
+	await expect(page.locator('canvas.weather-sky')).toHaveAttribute('data-renderer', /^(webgl|fallback)$/, { timeout: 5_000 });
 	results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
 	expect(results.violations, 'Privacy-cover dialog accessibility violations').toEqual([]);
-	await page.getByRole('button', { name: /Show Margaret's board/ }).click();
+	await page.screenshot({ path: 'artifacts/audit-final-screensaver.png' });
+	await page.getByRole('button', { name: 'Show main board' }).click();
 });
 
 test('keeps controls and focus visible in forced-colour mode', async ({ page }, testInfo) => {
@@ -330,6 +348,12 @@ test('exploratory pass covers control cycles and safe exits', async ({ page }, t
 	await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
 
 	await page.getByRole('button', { name: /things need your attention/ }).click();
+	await expect.poll(() => page.evaluate(() => {
+		const strip = document.querySelector<HTMLElement>('.column-strip')!;
+		const attention = document.querySelector<HTMLElement>('.attention-column')!;
+		const inset = Number.parseFloat(getComputedStyle(strip).scrollPaddingInlineStart) || 20;
+		return Math.abs(strip.scrollLeft - Math.max(0, attention.offsetLeft - inset));
+	})).toBeLessThan(2);
 	await page.getByRole('button', { name: 'Prepare reply' }).first().click();
 	await expect(page.getByRole('button', { name: 'Keep things as they are' })).toBeFocused();
 	await page.getByRole('button', { name: 'Keep things as they are' }).click();
@@ -346,7 +370,8 @@ test('exploratory pass covers control cycles and safe exits', async ({ page }, t
 	await page.getByRole('article', { name: /Elena visits/ }).getByRole('button').click();
 	await expect(page.getByRole('heading', { name: 'Elena visits' })).toBeVisible();
 	await page.getByRole('button', { name: 'Close details' }).click();
-	await page.getByRole('button', { name: /Appointment with Dr Patel/ }).click();
+	await page.getByRole('button', { name: 'Next day' }).click();
+	await expect(page.getByRole('heading', { name: 'Appointment with Dr Patel' })).toBeVisible();
 	await page.getByRole('button', { name: 'Show route on map' }).click();
 	await expect(page.getByRole('heading', { name: 'To Green Lane Medical Centre' })).toBeVisible();
 	await page.getByRole('button', { name: 'Close route' }).click();
@@ -355,7 +380,7 @@ test('exploratory pass covers control cycles and safe exits', async ({ page }, t
 	await expect(page.getByRole('dialog', { name: /Ask to cancel/ })).toBeVisible();
 	await page.getByRole('button', { name: 'Keep things as they are' }).click();
 
-	await page.getByRole('button', { name: /Talk to ClearDay/ }).click();
+	await page.getByRole('button', { name: /Talk to CareWeave/ }).click();
 	await page.getByRole('button', { name: '“What do I need to do today?”' }).click();
 	await expect(page.locator('.voice-response')).toContainText(/Today/);
 	await page.getByRole('button', { name: 'Close voice help' }).click();
@@ -379,11 +404,11 @@ test('real map is interactive, attributed, and keeps written directions', async 
 	const map = page.getByRole('region', { name: /Interactive map from Home/ });
 	await expect(map).toHaveAttribute('data-map-ready', 'true');
 	const mapBounds = await map.evaluate((node) => node.getBoundingClientRect().toJSON());
-	expect(mapBounds.width).toBeGreaterThan(500);
+	expect(mapBounds.width).toBeGreaterThanOrEqual(500);
 	expect(mapBounds.height).toBeGreaterThanOrEqual(330);
 	const voiceBarTop = await page.locator('.voice-bar').evaluate((node) => node.getBoundingClientRect().top);
 	expect(mapBounds.bottom).toBeLessThanOrEqual(voiceBarTop);
-	await expect(page.locator('.day-layout .timeline-section')).not.toBeVisible();
+	await expect(page.locator('.day-layout .timeline-section')).toBeVisible();
 	await expect(page.getByRole('link', { name: /OpenStreetMap contributors/ })).toBeVisible();
 	await expect(page.getByRole('link', { name: /Open full directions/ })).toHaveAttribute('href', /maps\.apple\.com/);
 	const zoomIn = page.getByRole('button', { name: 'Zoom in' });
@@ -419,14 +444,16 @@ test('real map fits the portrait iPad without horizontal overflow', async ({ pag
 	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(768);
 });
 
-test('shows all seven days without sideways scrolling on a portrait iPad', async ({ page }, testInfo) => {
+test('shows all seven days in one scrollable column on a portrait iPad', async ({ page }, testInfo) => {
 	test.skip(testInfo.project.name !== 'ipad-portrait', 'Portrait-specific layout check.');
 	await page.getByRole('button', { name: '7 days', exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Next 7 days' })).toBeVisible();
 	expect(await page.locator('.week-grid > button').count()).toBe(7);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(768);
 	const columns = await page.locator('.week-grid').evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').length);
-	expect(columns).toBe(2);
+	expect(columns).toBe(1);
+	const weekScroll = await page.locator('.week-column').evaluate((column) => ({ scrollHeight: column.scrollHeight, clientHeight: column.clientHeight }));
+	expect(weekScroll.scrollHeight).toBeGreaterThan(weekScroll.clientHeight);
 	await page.screenshot({ path: 'artifacts/audit-final-ipad-portrait.png' });
 });
 

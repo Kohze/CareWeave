@@ -16,7 +16,7 @@ async function waitForServer() {
 		if (await isReady()) return;
 		await new Promise((resolve) => setTimeout(resolve, 250));
 	}
-	throw new Error('Timed out waiting for the ClearDay preview server.');
+	throw new Error('Timed out waiting for the CareWeave preview server.');
 }
 
 function completion(child) {
@@ -39,7 +39,7 @@ try {
 	const runner = spawn(process.execPath, ['node_modules/@playwright/test/cli.js', 'test'], {
 		stdio: 'inherit',
 		windowsHide: true,
-		env: { ...process.env, CLEARDAY_EXTERNAL_SERVER: '1' }
+		env: { ...process.env, CAREWEAVE_EXTERNAL_SERVER: '1' }
 	});
 	process.exitCode = await completion(runner);
 } finally {

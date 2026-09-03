@@ -3,7 +3,7 @@
 import { build, files, version } from '$service-worker';
 
 const worker = self as unknown as ServiceWorkerGlobalScope;
-const cacheName = `clearday-${version}`;
+const cacheName = `careweave-${version}`;
 const assets = [...build, ...files];
 
 worker.addEventListener('install', (event) => {

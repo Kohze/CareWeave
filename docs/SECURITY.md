@@ -18,21 +18,21 @@ The challenge build contains a fictional active membership for Sam so the family
 
 Reminder responses and care status also stay deliberately narrow. A reminder can be done, snoozed, or turned into an ordinary help request; it never claims medication adherence or emergency escalation. A care update requires the named fictional carer to be assigned to the visit, accepts only a recent observation timestamp, and cannot regress a completed visit. Those checks demonstrate policy, not real professional identity.
 
-Before a public production launch beyond the challenge, put the Realtime and Gmail endpoints behind household authentication, platform-wide abuse protection, usage caps, and auditable consent. The bundled fictional mailbox and test outbox are never transmitted to Gmail; only a user-reviewed Gmail-mode plan can create a provider draft.
+Before a public production launch beyond the challenge, put the Realtime and Gmail endpoints behind household authentication, platform-wide abuse protection, usage caps, and auditable consent. Bundled fictional messages and locally saved suggestions are never transmitted to Gmail; only a user-reviewed Gmail-mode plan can create a provider draft.
 
 ## Challenge threat model
 
-Mailbox text is adversarial input. It can contain false dates, impersonated senders, or prompt-injection instructions. ClearDay therefore returns only marked, minimal summaries; declares `untrustedContentHint`; keeps provenance; and never lets source text choose recipients, tools, or approval state.
+Mailbox text is adversarial input. It can contain false dates, impersonated senders, or prompt-injection instructions. CareWeave therefore returns only marked, minimal summaries; declares `untrustedContentHint`; keeps provenance; and never lets source text choose recipients, tools, or approval state.
 
 Consequential steps are staged:
 
 1. A narrow tool validates IDs and bounded input.
-2. ClearDay creates an expiring action plan against a state revision.
+2. CareWeave creates an expiring action plan against a state revision.
 3. The visible dialog shows the exact recipient, subject, body, status effects, and warnings.
 4. Explicit approval executes that exact plan. A stale revision fails closed.
 5. The result reports affected IDs, the new revision, and what still awaits confirmation.
 
-Every WebMCP and Realtime handler also validates the input against the narrow advertised schema at execution time. Registration is sequential and uses one abort signal; if the host rejects any definition, ClearDay withdraws the attempted set and reports zero connected tools instead of presenting a partial connection as healthy.
+Every WebMCP and Realtime handler also validates the input against the narrow advertised schema at execution time. Registration is sequential and uses one abort signal; if the host rejects any definition, CareWeave withdraws the attempted set and reports zero connected tools instead of presenting a partial connection as healthy.
 
 ## Production boundaries
 
@@ -54,6 +54,10 @@ The challenge build requests only the OpenStreetMap tiles visible after a person
 - Rate limits, CSRF protection, content security policy, dependency scanning, and secret rotation.
 
 Provider writes must preserve the same request/confirmation distinction used by the demo. Email sending should require provider-native confirmation where available; failed or ambiguous responses must remain open loops, never optimistic success.
+
+## Weather privacy
+
+The privacy screen requests the current and daily forecast through CareWeave's same-origin `/api/weather` Vercel Function. It uses Open-Meteo, which requires no client or server API key. Before the request leaves CareWeave, household coordinates are rounded to two decimal places (roughly district-level precision); no name, event, email, or other schedule data is sent with the forecast request. The browser caches only the normalized visual forecast for one hour so the screen can degrade gracefully if the service is temporarily unavailable.
 
 ## Privacy posture
 

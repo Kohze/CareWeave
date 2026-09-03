@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { household } from './app';
-import { clearDayTools, executeClearDayTool, realtimeToolDefinitions, registerClearDayTools, toolInventory, webMcpStatus } from './webmcp';
+import { careWeaveTools, executeCareWeaveTool, realtimeToolDefinitions, registerCareWeaveTools, toolInventory, webMcpStatus } from './webmcp';
 
 describe('shared WebMCP and voice tools', () => {
 	beforeEach(() => household.reset());
@@ -32,23 +32,23 @@ describe('shared WebMCP and voice tools', () => {
 	});
 
 	it('refuses a final approval even if a voice model invents the tool call', async () => {
-		const result = await executeClearDayTool('approve_action_plan', { plan_id: 'anything', user_confirmed: true });
+		const result = await executeCareWeaveTool('approve_action_plan', { plan_id: 'anything', user_confirmed: true });
 		expect(result).toMatchObject({ success: false });
 		expect(JSON.stringify(result)).toMatch(/deliberate tap/i);
 	});
 
 	it('rejects malformed input inside the handler even when a host skips schema validation', async () => {
 		const plansBefore = household.snapshot().plans.length;
-		const appointmentTool = clearDayTools().find((tool) => tool.name === 'create_appointment_request_plan')!;
+		const appointmentTool = careWeaveTools().find((tool) => tool.name === 'create_appointment_request_plan')!;
 		const invalidRequest = await appointmentTool.execute({
 			commitment_id: 'event-doctor', request: 'delete', email_message: 'Please remove this appointment.'
 		});
-		const invalidDate = await clearDayTools().find((tool) => tool.name === 'focus_date')!.execute({ date: '2026-02-31' });
-		const invalidDateTime = await clearDayTools().find((tool) => tool.name === 'apply_confirmed_change')!.execute({
+		const invalidDate = await careWeaveTools().find((tool) => tool.name === 'focus_date')!.execute({ date: '2026-02-31' });
+		const invalidDateTime = await careWeaveTools().find((tool) => tool.name === 'apply_confirmed_change')!.execute({
 			commitment_id: 'event-doctor', start_at: '2026-09-03T09:00:00', end_at: '2026-09-03T09:30:00',
 			confirmation_note: 'Clinic email received.', confirmation_verified: true
 		});
-		const unexpectedField = await clearDayTools().find((tool) => tool.name === 'get_food_status')!.execute({ ignored: true });
+		const unexpectedField = await careWeaveTools().find((tool) => tool.name === 'get_food_status')!.execute({ ignored: true });
 
 		expect(invalidRequest).toMatchObject({ success: false });
 		expect(invalidDate).toMatchObject({ success: false });
@@ -70,14 +70,14 @@ describe('shared WebMCP and voice tools', () => {
 			}
 		});
 
-		await expect(registerClearDayTools()).rejects.toThrow('Host rejected the tool.');
+		await expect(registerCareWeaveTools()).rejects.toThrow('Host rejected the tool.');
 		expect(active.size).toBe(0);
 		expect(get(webMcpStatus)).toMatchObject({ state: 'error', supported: false, registered: 0 });
 		expect(get(webMcpStatus).message).toMatch(/failed after 2 of 32/i);
 	});
 
 	it('keeps support tools role-scoped and privacy-limited', async () => {
-		const tools = clearDayTools();
+		const tools = careWeaveTools();
 		const date = new Date();
 		const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 		const overview = await tools.find((tool) => tool.name === 'get_support_overview')!.execute({
@@ -94,7 +94,7 @@ describe('shared WebMCP and voice tools', () => {
 	});
 
 	it('exposes freshness and the complete reminder-to-support loop', async () => {
-		const tools = clearDayTools();
+		const tools = careWeaveTools();
 		const sync = await tools.find((tool) => tool.name === 'get_sync_status')!.execute({});
 		const reminder = await tools.find((tool) => tool.name === 'respond_to_reminder')!.execute({ reminder_id: 'reminder-lunch', response: 'need_help' });
 		const accepted = await tools.find((tool) => tool.name === 'respond_to_help_request')!.execute({ supporter_person_id: 'person-sam', reminder_id: 'reminder-lunch', response: 'acknowledged' });

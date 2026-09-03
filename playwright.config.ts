@@ -15,7 +15,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure'
   },
-  webServer: process.env.CLEARDAY_EXTERNAL_SERVER ? undefined : {
+  webServer: process.env.CAREWEAVE_EXTERNAL_SERVER ? undefined : {
     command: 'node node_modules/vite/bin/vite.js preview --host 127.0.0.1',
     port: 4173,
     reuseExistingServer: true,

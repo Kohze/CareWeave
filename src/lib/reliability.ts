@@ -27,7 +27,7 @@ export function feedIsStale(feed: DataFeed, now = new Date()): boolean {
 
 export function syncOverview(data: AppData, online = true, now = new Date()): SyncOverview {
 	if (!data.dataFeeds.length) {
-		return { status: 'delayed', label: 'Update status unavailable', detail: 'ClearDay cannot verify when connected information last refreshed.', problemFeeds: [] };
+		return { status: 'delayed', label: 'Update status unavailable', detail: 'CareWeave cannot verify when connected information last refreshed.', problemFeeds: [] };
 	}
 	const oldestSync = [...data.dataFeeds]
 		.sort((a, b) => a.lastSuccessfulSyncAt.localeCompare(b.lastSuccessfulSyncAt))[0]?.lastSuccessfulSyncAt;

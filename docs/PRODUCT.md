@@ -2,7 +2,7 @@
 
 ## Promise
 
-ClearDay answers three questions without making an older adult operate a conventional calendar:
+CareWeave answers three questions without making an older adult operate a conventional calendar:
 
 1. What is happening today?
 2. Is there anything I need to decide or prepare?
@@ -26,11 +26,11 @@ It serves the older adult first, while making the same facts understandable to f
 ## Appointment lifecycle
 
 ```text
-confirmed → change requested / cancellation requested → awaiting reply
+confirmed → suggestion or Gmail draft prepared → still confirmed
      └──────────────── verified external confirmation ──→ confirmed new time / cancelled
 ```
 
-An outbound request does not imply acceptance. Protected health commitments cannot disappear because an email was sent.
+A local suggestion or Gmail draft is not a sent request. Even a sent request does not imply acceptance, so protected health commitments change only after verified external confirmation.
 
 ## Accessibility decisions
 

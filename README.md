@@ -4,12 +4,12 @@
 
 CareWeave is a voice-first household dayboard for older adults. It turns appointments, carer visits, food needs, shopping, routes, and actionable email into one calm, shared view designed for an iPad on the wall.
 
-Built for the OpenAI WebMCP Challenge with SvelteKit, Svelte 5, Vite, TypeScript, OpenAI Realtime, Leaflet, and OpenStreetMap.
+Built for the OpenAI WebMCP Challenge with SvelteKit, Svelte 5, Vite, TypeScript, OpenAI Realtime, Leaflet, OpenStreetMap, Open-Meteo, Atmosphere, and Meteocons.
 
-![ClearDay running in an iPad landscape viewport](artifacts/clearday-ipad.png)
+![CareWeave running in an iPad landscape viewport](artifacts/audit-final-ipad-landscape.png)
 
 > [!IMPORTANT]
-> ClearDay is a challenge prototype, not a medical device or production care system. The bundled household, clinic, mailbox, addresses, and routes are fictional. No real email is sent by the demo.
+> CareWeave is a challenge prototype, not a medical device or production care system. The bundled household, clinic, mailbox, addresses, and routes are fictional. No real email is sent by the demo.
 
 ## Contents
 
@@ -31,17 +31,17 @@ Built for the OpenAI WebMCP Challenge with SvelteKit, Svelte 5, Vite, TypeScript
 
 ## The idea
 
-Most calendars are designed for people who already know how to operate calendars. ClearDay starts with three simpler questions:
+Most calendars are designed for people who already know how to operate calendars. CareWeave starts with three simpler questions:
 
 1. What is happening today?
 2. Is there anything I need to decide or prepare?
 3. Can you help me deal with it safely?
 
-The interface serves the older adult first, while keeping the same facts understandable to relatives, carers, clinics, and an AI assistant. A person can ask, “When should I leave for the doctor?”, see the relevant appointment and route appear, and hear a short answer. They can ask to move the appointment, but ClearDay will only prepare a reviewable request—the confirmed appointment remains untouched until the clinic replies.
+The interface serves the older adult first, while keeping the same facts understandable to relatives, carers, clinics, and an AI assistant. A person can ask, “When should I leave for the doctor?”, see the relevant appointment and route appear, and hear a short answer. They can ask to move the appointment, but CareWeave will only prepare a reviewable request—the confirmed appointment remains untouched until the clinic replies.
 
 ## Why WebMCP matters here
 
-[WebMCP site tools](https://learn.chatgpt.com/docs/webmcp) let a website expose useful actions directly to a compatible agent working on the same open page. ClearDay registers 32 top-level JavaScript tools through `document.modelContext.registerTool`.
+[WebMCP site tools](https://learn.chatgpt.com/docs/webmcp) let a website expose useful actions directly to a compatible agent working on the same open page. CareWeave registers 32 top-level JavaScript tools through `document.modelContext.registerTool`.
 
 This produces a genuinely shared workspace:
 
@@ -58,24 +58,25 @@ The same domain handlers power touch interactions, WebMCP, and the embedded conv
 
 | Calm dayboard | Real map and written route |
 |---|---|
-| ![The ClearDay day view](artifacts/audit-final-day.png) | ![A route displayed on a real map](artifacts/audit-final-real-map.png) |
+| ![The CareWeave day view](artifacts/audit-final-day.png) | ![A route displayed on a real map](artifacts/audit-final-real-map.png) |
 
 | Human review before action | Conversational voice |
 |---|---|
-| ![A clinic email review dialog](artifacts/audit-final-review-dialog.png) | ![The ClearDay conversational voice dialog](artifacts/audit-final-voice-dialog.png) |
+| ![A clinic email review dialog](artifacts/audit-final-review-dialog.png) | ![The CareWeave conversational voice dialog](artifacts/audit-final-voice-dialog.png) |
 
-| Trusted family support |
-|---|
-| ![The privacy-limited ClearDay family supporter dashboard](artifacts/audit-final-family-support.png) |
+| Trusted family support | Privacy screensaver |
+|---|---|
+| ![The privacy-limited CareWeave family supporter dashboard](artifacts/audit-final-family-support.png) | ![The CareWeave live weather privacy screen](artifacts/audit-final-screensaver.png) |
 
 ### Household planning
 
-- A simplified Day view and readable Next 7 days view
+- A horizontally scrolling ribbon of focused columns with generous vertical spacing
+- A simplified Day view and readable Next 7 days view with a professional local weather icon and high temperature for every day
 - Health appointments, carer visits, meals, shopping, travel, social plans, and household tasks
 - Progressive event details with people, place, notes, status, preparation, source, and actions
 - Calm pacing labels based on duration, travel, gaps, and breathing-room preferences
 - Food coverage, shopping deadline, and a large tappable grocery checklist
-- Human-readable history, sandbox outbox, and local undo
+- Human-readable history, locally saved message suggestions, and local undo
 
 ### Routes
 
@@ -93,7 +94,7 @@ The same domain handlers power touch interactions, WebMCP, and the embedded conv
 - Minimal provenance instead of copying an entire inbox
 - Email-derived content explicitly marked as untrusted
 - Reviewable clinic reschedule and cancellation requests
-- Exact recipient, subject, body, status effects, and warnings shown before approval
+- Exact recipient, subject, body, delivery mode, and warnings shown before approval
 - A request never masquerades as a confirmed calendar change
 
 ### Family support
@@ -111,7 +112,10 @@ The same domain handlers power touch interactions, WebMCP, and the embedded conv
 - Visible current, delayed, and offline state on the dayboard and family view
 - Reminder actions limited to **Done**, **Remind me later**, and **I need help**
 - Recurring-series, named-time-zone, provider-version, conflict, and duplicate-review support below the simple UI
-- One-tap privacy cover and an urgent-help handoff that explicitly does not claim emergency monitoring
+- One-tap privacy screen with a forecast-driven animated sky, local clock, and next event
+- No-key weather data through a same-origin Open-Meteo proxy; only approximate coordinates are shared
+- MIT-licensed animated SVG weather artwork from [Meteocons](https://github.com/basmilius/meteocons), bundled locally rather than loaded from a third-party CDN
+- Urgent-help handoff that explicitly does not claim emergency monitoring
 - Guided display and per-card read-aloud preferences without adding another everyday tab
 
 ### Conversational voice
@@ -125,7 +129,7 @@ The same domain handlers power touch interactions, WebMCP, and the embedded conv
 
 OpenAI recommends WebRTC for browser and mobile Realtime clients. See the [Realtime WebRTC guide](https://developers.openai.com/api/docs/guides/realtime-webrtc) and [voice-agent guide](https://developers.openai.com/api/docs/guides/voice-agents).
 
-The Gmail connection uses Google's OAuth web-server flow independently of voice. ClearDay exposes no Gmail send endpoint: an approved plan creates a draft that must still be reviewed and sent from Gmail.
+The Gmail connection uses Google's OAuth web-server flow independently of voice. CareWeave exposes no Gmail send endpoint: an approved plan creates a draft that must still be reviewed and sent from Gmail.
 
 ## Architecture
 
@@ -156,12 +160,12 @@ WebMCP and embedded voice are related but distinct adapters:
 
 ## WebMCP implementation
 
-ClearDay feature-detects WebMCP and registers tools only when the host exposes `document.modelContext.registerTool`:
+CareWeave feature-detects WebMCP and registers tools only when the host exposes `document.modelContext.registerTool`:
 
 ```ts
 if (typeof document.modelContext?.registerTool === 'function') {
   try {
-    for (const tool of clearDayTools()) {
+    for (const tool of careWeaveTools()) {
       await document.modelContext.registerTool(tool, { signal: controller.signal });
     }
   } catch (error) {
@@ -194,7 +198,7 @@ interface ToolResult<T = unknown> {
 
 ### Tool annotations
 
-| Annotation | Used for | Meaning in ClearDay |
+| Annotation | Used for | Meaning in CareWeave |
 |---|---|---|
 | `readOnlyHint` | 13 tools | The tool reads state and cannot alter the household or UI. |
 | `untrustedContentHint` | 5 tools | Some returned or accepted fields came from email and must be treated as data, never instructions. |
@@ -203,7 +207,7 @@ UI-only tools intentionally change the shared screen but not household records. 
 
 ## Complete WebMCP tool reference
 
-ClearDay exposes exactly 32 tools, grouped around a safe agent workflow. Every handler repeats schema validation at execution time, so malformed input fails closed even if a host does not enforce the advertised schema.
+CareWeave exposes exactly 32 tools, grouped around a safe agent workflow. Every handler repeats schema validation at execution time, so malformed input fails closed even if a host does not enforce the advertised schema.
 
 ### 1. Understand and ingest
 
@@ -264,7 +268,7 @@ The two email-planning tools return `needsUserConfirmation: true` and open the s
 
 | Tool | Inputs | Consequence | Guardrail |
 |---|---|---|---|
-| `approve_action_plan` | `plan_id`; `user_confirmed: true` | Executes the frozen plan | Requires explicit approval of the exact visible plan. A stale or expired revision fails closed. The challenge build saves mail only to a test outbox. |
+| `approve_action_plan` | `plan_id`; `user_confirmed: true` | Executes the frozen plan | Requires explicit approval of the exact visible plan. A stale or expired revision fails closed. Without Gmail, it saves a local suggestion and sends nothing. |
 | `discard_action_plan` | `plan_id` | Discards one draft | Sends nothing and changes no appointment. |
 | `respond_to_help_request` | `supporter_person_id`; `reminder_id`; `response`: `acknowledged` or `completed` | Assigns or completes ordinary help | Requires active `respond_to_help` permission. Completion cannot be claimed before acknowledgement, and it never changes a medical appointment. |
 | `record_care_visit_status` | `carer_person_id`; `commitment_id`; `status`; `observed_at` | Updates shared visit status | Requires the named carer to be assigned to that care event, bounds observation time, prevents completed-state regression, and exposes no professional note. Production must derive identity from authentication. |
@@ -371,16 +375,14 @@ The central invariant is preserved throughout:
 ```text
 confirmed appointment
        │
-       ├── reschedule request sent ──► change requested / awaiting reply
-       │                                  │
-       │                                  └── verified clinic reply ──► confirmed new time
+       ├── local suggestion or Gmail draft prepared ──► still confirmed
        │
-       └── cancellation requested ──► cancellation requested / awaiting reply
-                                          │
-                                          └── verified clinic reply ──► cancelled
+       ├── verified clinic change ──► confirmed new time
+       │
+       └── verified clinic cancellation ──► cancelled
 ```
 
-Sending a request is not confirmation. ClearDay never deletes or silently moves the original appointment just because an email was prepared or sent.
+Preparing a message is not sending it, and sending a request is not confirmation. CareWeave never changes the appointment merely because a suggestion or Gmail draft was created.
 
 ## Run locally
 
@@ -424,13 +426,13 @@ OPENAI_API_KEY=your_openai_api_key
 OPENAI_REALTIME_MODEL=gpt-realtime-2.1
 ```
 
-Restart `npm run dev`, open **Talk to ClearDay**, and choose **Start conversation**.
+Restart `npm run dev`, open **Talk to CareWeave**, and choose **Start conversation**.
 
 Never prefix this key with `VITE_` and never place it in browser code. Development requests go through a Vite server endpoint; deployed requests use a Vercel Function. The permanent key remains server-side while the browser receives only the WebRTC SDP answer.
 
 ## Connect Gmail with OAuth
 
-Gmail is optional. When configured, **Attention → Connect Gmail** starts Google's OAuth web-server flow. ClearDay requests `gmail.readonly` and `gmail.compose`, imports only recent metadata/snippets for local review, and creates Gmail drafts only after the visible confirmation dialog. It exposes no send endpoint.
+Gmail is optional. When configured, **Attention → Connect Gmail** starts Google's OAuth web-server flow. CareWeave requests `gmail.readonly` and `gmail.compose`, imports only recent metadata/snippets for local review, and creates Gmail drafts only after the visible confirmation dialog. It exposes no send endpoint.
 
 Register a Google OAuth **Web application** with this exact callback:
 
@@ -454,7 +456,7 @@ The client secret and encrypted refresh token are never available to browser Jav
 
 Current host availability and controls can change, so check the [official site-tools documentation](https://learn.chatgpt.com/docs/webmcp) first.
 
-1. Start ClearDay locally or open the deployed HTTPS URL.
+1. Start CareWeave locally or open the deployed HTTPS URL.
 2. Open the page in a compatible ChatGPT/Codex built-in browser.
 3. Inspect the browser’s available site tools and confirm that 32 tools are present.
 4. Ask: “What do I need to do today, and is tomorrow rushed?”
@@ -462,7 +464,7 @@ Current host availability and controls can change, so check the [official site-t
 6. Ask: “Prepare a request to move the appointment to a calm morning.”
 7. Inspect the review dialog before approving anything.
 
-The implementation is in [`src/lib/webmcp.ts`](src/lib/webmcp.ts). It registers tools only when the browser provides the API, so ClearDay remains a normal usable PWA everywhere else.
+The implementation is in [`src/lib/webmcp.ts`](src/lib/webmcp.ts). It registers tools only when the browser provides the API, so CareWeave remains a normal usable PWA everywhere else.
 
 ## Verification
 
@@ -489,7 +491,7 @@ The automated suite covers:
 - WCAG AA text contrast and axe-core WCAG A/AA checks
 - Reduced motion, forced colours, 200% text reflow, and horizontal-overflow checks
 
-The latest local verification completed with zero Svelte diagnostics, 38 passing unit tests, 62 passing browser tests (34 deliberately skipped by device applicability), and a successful static production build.
+The latest local verification completed with zero Svelte diagnostics, 40 passing unit tests, 69 passing browser tests (36 deliberately skipped by device applicability), and a successful static production build.
 
 ## Deployment
 
@@ -521,7 +523,7 @@ Equivalent serverless functions can be created for Cloudflare, AWS, or another p
 
 ## Install on an iPad
 
-1. Deploy ClearDay to an HTTPS URL.
+1. Deploy CareWeave to an HTTPS URL.
 2. Open it in Safari on the iPad.
 3. Choose **Share → Add to Home Screen**.
 4. Open the installed PWA and grant microphone permission only if conversational voice is configured.
@@ -531,7 +533,7 @@ The manifest, Apple web-app metadata, responsive layout, service worker, and sta
 
 ## Accessibility and older-adult design
 
-ClearDay was designed around a 1024×768 wall-mounted iPad, with portrait-iPad and phone fallbacks.
+CareWeave was designed around a 1024×768 wall-mounted iPad, with portrait-iPad and phone fallbacks.
 
 - Day view instead of a dense month grid
 - Large type and plain-language labels
@@ -552,7 +554,7 @@ The repository contains the full [older-adult UX audit](docs/OLDER_ADULT_UX_AUDI
 
 ### Email is data, never instructions
 
-Mailbox content can contain mistakes, impersonation, and prompt injection. ClearDay therefore:
+Mailbox content can contain mistakes, impersonation, and prompt injection. CareWeave therefore:
 
 - Keeps email-derived fields minimal and marks them untrusted.
 - Preserves provenance and stable provider IDs.
@@ -563,7 +565,7 @@ Mailbox content can contain mistakes, impersonation, and prompt injection. Clear
 ### Consequential work is staged
 
 1. A narrow tool validates bounded input.
-2. ClearDay creates an expiring plan tied to the current state revision.
+2. CareWeave creates an expiring plan tied to the current state revision.
 3. A visible dialog shows the exact recipient, subject, body, state effects, and warnings.
 4. Explicit approval executes only that frozen plan.
 5. If household state changed, approval fails closed and asks for a fresh review.
@@ -573,7 +575,7 @@ Mailbox content can contain mistakes, impersonation, and prompt injection. Clear
 
 - All identities use `.example` or `.test` addresses.
 - Without Gmail OAuth, mail is saved only to a local sandbox outbox; no real message is sent.
-- With Gmail OAuth, ClearDay can read bounded message previews and create drafts, but it still cannot send email.
+- With Gmail OAuth, CareWeave can read bounded message previews and create drafts, but it still cannot send email.
 - The bundled mailbox and household data are deterministic.
 - Route coordinates and highlighted paths are fictional demonstrations.
 - OpenStreetMap tiles are requested only when a route is opened.
@@ -588,7 +590,7 @@ Read the detailed [security and production-integration notes](docs/SECURITY.md).
 | Identity | Fictional trusted circle with a role-limited family projection | Household authentication, invitations, roles, consent, revocation, and carer access controls |
 | Mail | Fictional adapter plus optional Gmail OAuth read/draft connection | Authenticated accounts, server-side token store, device revocation, audit retention, and recipient allow-lists |
 | Calendar | Local commitments | Provider adapters, idempotency keys, event-version checks, and reconciliation |
-| Sending | No send endpoint; local test outbox or Gmail drafts | Authenticated send workflow, delivery state, native confirmation, and server audit trail if sending is added |
+| Sending | No send endpoint; local suggestions or Gmail drafts | Authenticated send workflow, delivery state, native confirmation, and server audit trail if sending is added |
 | Maps | OpenStreetMap tiles with fictional path | Contracted or self-hosted tiles, accessibility-aware routing, timestamps, and privacy policy |
 | Storage | Browser local storage | Encrypted server storage, retention controls, export/delete, backup, and device revocation |
 | Voice | Realtime endpoint with touch-only approval | Authentication, rate limits, usage caps, abuse protection, consent logging, and monitoring |

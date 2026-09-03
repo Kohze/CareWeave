@@ -23,7 +23,7 @@
 		onRequest: () => void;
 	} = $props();
 
-	let iconName = $derived(item.kind === 'health' ? 'heart' : item.kind === 'care' ? 'care' : item.kind === 'food' ? 'basket' : item.kind === 'social' ? 'walk' : 'calendar');
+	let iconName = $derived(item.kind === 'health' ? 'heart' : item.kind === 'care' ? 'care-visit' : item.kind === 'food' ? 'basket' : item.kind === 'social' ? 'walk' : 'calendar');
 </script>
 
 <article class:highlighted class:selected class="event-card {item.kind}" aria-label={`${item.title}, ${formatTime(item.startAt, item.timeZone)}${reminder && reminder.status !== 'done' ? ', reminder available' : ''}`}>

@@ -48,7 +48,7 @@
 			const coordinates = route.path.map((point) => [point.latitude, point.longitude] as [number, number]);
 			const line = L.polyline(coordinates, { color: '#126f69', weight: 7, opacity: 0.92 }).addTo(map);
 			const pin = (symbol: string) => L.divIcon({
-				className: 'clearday-map-pin',
+				className: 'careweave-map-pin',
 				html: `<span aria-hidden="true">${symbol}</span>`,
 				iconSize: [48, 48],
 				iconAnchor: [24, 42]

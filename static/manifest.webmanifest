@@ -1,6 +1,6 @@
 {
-  "name": "ClearDay — your day, clearly",
-  "short_name": "ClearDay",
+  "name": "CareWeave — everyday care, woven together",
+  "short_name": "CareWeave",
   "description": "A calm, agent-compatible home dayboard for everyday commitments.",
   "start_url": "/",
   "scope": "/",
@@ -10,7 +10,7 @@
   "theme_color": "#f3f0e7",
   "icons": [
     {
-      "src": "/icons/clearday.svg",
+      "src": "/icons/careweave.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

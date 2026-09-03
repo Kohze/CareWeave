@@ -14,8 +14,8 @@ const GMAIL_SCOPES = [
 	'https://www.googleapis.com/auth/gmail.readonly',
 	'https://www.googleapis.com/auth/gmail.compose'
 ];
-const FLOW_COOKIE = 'clearday_gmail_flow';
-const TOKEN_COOKIE = 'clearday_gmail_token';
+const FLOW_COOKIE = 'careweave_gmail_flow';
+const TOKEN_COOKIE = 'careweave_gmail_token';
 const MAX_BODY_BYTES = 24_000;
 
 type GoogleTokenResponse = {

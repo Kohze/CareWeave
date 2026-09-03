@@ -2,11 +2,11 @@
 
 ## One-line pitch
 
-ClearDay turns email, appointments, care, food, shopping, and routes into a calm voice-controlled household dayboard for older adults—while keeping every consequential action reviewable and every appointment state truthful.
+CareWeave turns email, appointments, care, food, shopping, and routes into a calm voice-controlled household dayboard for older adults—while keeping every consequential action reviewable and every appointment state truthful.
 
 ## Suggested description
 
-Older adults often face a fragmented operational burden: clinic emails, carer changes, grocery needs, transport details, and a calendar designed for office workers. ClearDay is a wall-iPad dayboard that uses WebMCP to let a person talk naturally with a browser assistant about the same simple visual plan.
+Older adults often face a fragmented operational burden: clinic emails, carer changes, grocery needs, transport details, and a calendar designed for office workers. CareWeave is a wall-iPad dayboard that uses WebMCP to let a person talk naturally with a browser assistant about the same simple visual plan.
 
 Its 32 imperative tools cover mailbox extraction and connector ingestion, information freshness, reminders, calendar integrity, privacy-scoped support, explainable planning, shared visual focus, and safe action. A person can ask what matters today, see when to leave, find calm time options, ask a trusted person for help, and prepare a clinic email. Consequential work is staged as an expiring action plan that reveals the exact recipient, subject, message, and state effects before approval. Sending a reschedule or cancellation request never changes a confirmed appointment; only verified external confirmation can apply the new time or final cancellation.
 

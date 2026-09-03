@@ -1,13 +1,13 @@
-# Gmail OAuth setup for ClearDay
+# Gmail OAuth setup for CareWeave
 
-ClearDay uses Google's OAuth 2.0 web-server flow. The Google client secret and refresh token are never exposed to browser JavaScript. The deployed Vercel Functions exchange and refresh tokens; the refresh token is encrypted with AES-256-GCM in an `HttpOnly`, `SameSite=Lax`, production-`Secure` cookie scoped to `/api/gmail`.
+CareWeave uses Google's OAuth 2.0 web-server flow. The Google client secret and refresh token are never exposed to browser JavaScript. The deployed Vercel Functions exchange and refresh tokens; the refresh token is encrypted with AES-256-GCM in an `HttpOnly`, `SameSite=Lax`, production-`Secure` cookie scoped to `/api/gmail`.
 
 The integration can read recent Gmail message metadata/snippets and create drafts. It deliberately has no send endpoint.
 
 ## 1. Create the Google project
 
 1. Open [Google Cloud Console](https://console.cloud.google.com/).
-2. Create or select a project for ClearDay.
+2. Create or select a project for CareWeave.
 3. Open **APIs & Services → Library**.
 4. Find **Gmail API** and enable it.
 
@@ -65,20 +65,20 @@ Never commit `.env`.
 
 ## 5. Connect and test
 
-1. Open ClearDay and choose **Attention**.
+1. Open CareWeave and choose **Attention**.
 2. Choose **Connect Gmail**.
 3. Select the intended Google account and approve the two requested Gmail scopes.
-4. After returning to ClearDay, choose **Check Gmail**.
+4. After returning to CareWeave, choose **Check Gmail**.
 5. Open an imported review item and choose **Prepare reply**.
 6. Review the exact recipient, subject, and body, then choose **Create Gmail draft**.
 7. Open Gmail and verify that the item exists in Drafts and was not sent.
-8. Use **Disconnect** in ClearDay and verify that a subsequent Gmail check requires reconnection.
+8. Use **Disconnect** in CareWeave and verify that a subsequent Gmail check requires reconnection.
 
 ## Security and production limitations
 
 - Email content is treated as untrusted data and cannot directly approve actions.
 - The browser cookie avoids a database for a private, single-household deployment. A multi-user production service still needs account authentication, server-side token storage keyed to the authenticated user, device/session revocation, audit retention, deletion/export controls, and a reviewed privacy policy.
-- Rotate `GMAIL_TOKEN_ENCRYPTION_KEY` to invalidate every existing ClearDay Gmail session.
+- Rotate `GMAIL_TOKEN_ENCRYPTION_KEY` to invalidate every existing CareWeave Gmail session.
 - OAuth approval is separate from OpenAI Realtime voice. `OPENAI_API_KEY` remains a different Vercel server secret.
 
 Primary references: [Google OAuth web-server flow](https://developers.google.com/identity/protocols/oauth2/web-server), [Gmail authorization](https://developers.google.com/workspace/gmail/api/auth/web-server), and [Gmail scopes](https://developers.google.com/workspace/gmail/api/auth/scopes).

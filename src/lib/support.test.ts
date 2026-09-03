@@ -46,7 +46,7 @@ describe('trusted family support', () => {
 		expect(household.suggestSupport('person-patel', 'check_in', 'I can call this evening.').success).toBe(false);
 	});
 
-	it('creates a proposal without changing the calendar and lets Margaret respond', () => {
+	it('creates a proposal without changing the calendar and lets the account owner respond', () => {
 		const before = household.snapshot().commitments;
 		const offered = household.suggestSupport('person-sam', 'appointment', 'I can come with you.', 'event-doctor');
 		expect(offered.success).toBe(true);

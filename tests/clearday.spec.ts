@@ -7,6 +7,24 @@ declare global {
 }
 
 test.beforeEach(async ({ page }) => {
+	await page.route('**/api/weather**', async (route) => {
+		const today = new Date().toISOString().slice(0, 10);
+		const days = Array.from({ length: 7 }, (_, index) => new Date(`${today}T12:00:00Z`).getTime() + index * 86_400_000).map((time) => new Date(time).toISOString().slice(0, 10));
+		const hours = days.flatMap((date) => Array.from({ length: 24 }, (_, hour) => `${date}T${String(hour).padStart(2, '0')}:00`));
+		const dailyCodes = [61, 2, 3, 0, 80, 1, 51];
+		await route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+			current: { time: `${today}T14:00`, temperature_2m: 14, precipitation: .7, weather_code: 61, cloud_cover: 91, wind_speed_10m: 18 },
+			daily: { time: days, weather_code: dailyCodes, temperature_2m_max: [16, 18, 17, 20, 15, 19, 17], temperature_2m_min: [9, 10, 11, 12, 8, 10, 9], precipitation_probability_max: [78, 24, 18, 5, 62, 12, 48] },
+			hourly: {
+				time: hours,
+				weather_code: hours.map((_, index) => dailyCodes[Math.floor(index / 24)]),
+				temperature_2m: hours.map((_, index) => 10 + Math.floor(index / 24) + (index % 24) / 10),
+				apparent_temperature: hours.map((_, index) => 9 + Math.floor(index / 24) + (index % 24) / 10),
+				precipitation_probability: hours.map((_, index) => [78, 24, 18, 5, 62, 12, 48][Math.floor(index / 24)]),
+				wind_speed_10m: hours.map((_, index) => 8 + (index % 24) / 2)
+			}
+		}) });
+	});
 	await page.addInitScript(() => {
 		window.__registeredTools = [];
 		Object.defineProperty(document, 'modelContext', {
@@ -25,10 +43,187 @@ test.beforeEach(async ({ page }) => {
 
 test('renders the touch-first dayboard and switches views', async ({ page }) => {
 	await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
-	await expect(page.getByText('Elena visits')).toBeVisible();
+	await expect(page.locator('.today-column .timeline').getByText('Elena visits', { exact: true })).toBeVisible();
+	await expect(page.locator('.today-column .freshness-strip')).toHaveCount(0);
+	await expect(page.getByText(/saved local forecast|live local forecast|forecast preview/i)).toHaveCount(0);
+	await expect(page.getByText("Next in today's plan", { exact: true })).toHaveCount(0);
+	await expect(page.locator('.timeline .event-card.selected')).toHaveCount(1);
+	await expect(page.locator('.right-rail .detail-panel')).toBeVisible();
 	await page.getByRole('button', { name: 'Food', exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Food at home' })).toBeVisible();
 	await expect(page.getByText('Milk', { exact: true })).toBeVisible();
+});
+
+test('uses distinct professional icons for care people and urgent help', async ({ page }) => {
+	const elena = page.getByRole('article', { name: /Elena visits/ });
+	await expect(elena.locator('svg.lucide-hand-heart')).toBeVisible();
+	await elena.getByRole('button').first().click();
+	await expect(page.locator('.detail-panel dt').filter({ hasText: 'Who' }).locator('svg.lucide-users-round')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Help now' }).locator('svg.lucide-circle-question-mark')).toBeVisible();
+	await page.getByRole('button', { name: 'Help now' }).click();
+	await expect(page.getByRole('dialog', { name: 'Do you need help now?' }).locator('svg.lucide-siren')).toBeVisible();
+});
+
+test('opens the sole event details when changing the displayed day', async ({ page }) => {
+	const initialScroll = await page.locator('.column-strip').evaluate((strip) => strip.scrollLeft);
+	await page.getByRole('button', { name: 'Next day' }).click();
+	const onlyEvent = page.locator('.timeline .event-card');
+	await expect(onlyEvent).toHaveCount(1);
+	const eventTitle = (await onlyEvent.locator('.event-copy strong').textContent())?.trim();
+	expect(eventTitle).toBeTruthy();
+	await expect(page.locator('.detail-panel').getByRole('heading', { name: eventTitle! })).toBeVisible();
+	await expect(page.locator('.detail-panel').getByRole('heading', { name: 'What this is about' })).toBeVisible();
+	await expect.poll(() => page.locator('.column-strip').evaluate((strip, start) => Math.abs(strip.scrollLeft - start), initialScroll)).toBeLessThan(2);
+});
+
+test('updates the Day forecast to match the selected date', async ({ page }) => {
+	const forecast = page.locator('.today-forecast-summary');
+	await expect(forecast).toContainText('Rain expected');
+	await expect(forecast).toContainText('14°');
+
+	await page.getByRole('button', { name: 'Next day' }).click();
+	await expect(forecast).toContainText('Partly cloudy');
+	await expect(forecast).toContainText('High 18° · Low 10°');
+	await expect(forecast).toContainText('24% rain');
+	await expect(forecast).not.toContainText('14°');
+
+	await page.getByRole('button', { name: 'Next day' }).click();
+	await expect(forecast).toContainText('Overcast');
+	await expect(forecast).toContainText('High 17° · Low 11°');
+	await expect(forecast).toContainText('18% rain');
+});
+
+test('opens a full hourly forecast for the selected day', async ({ page }) => {
+	await page.getByRole('button', { name: 'Next day' }).click();
+	await page.getByRole('button', { name: /Open hourly forecast/ }).click();
+	const forecastPage = page.getByRole('dialog', { name: 'Hourly forecast' });
+	await expect(forecastPage).toBeVisible();
+	await expect(forecastPage.getByText('Partly cloudy').first()).toBeVisible();
+	await expect(forecastPage.locator('.hour-cards article')).toHaveCount(24);
+	await expect(forecastPage.locator('.hour-cards article').first()).toContainText('00:00');
+	await expect(forecastPage.locator('.hour-cards article').first()).toContainText('11°');
+	await forecastPage.getByRole('button', { name: 'Close hourly forecast' }).click();
+	await expect(forecastPage).not.toBeVisible();
+});
+
+test('does not draw a timeline rail through an empty day', async ({ page }) => {
+	for (let day = 0; day < 3; day += 1) await page.getByRole('button', { name: 'Next day' }).click();
+	await expect(page.locator('.timeline')).toHaveClass(/empty/);
+	expect(await page.locator('.timeline').evaluate((timeline) => getComputedStyle(timeline, '::before').display)).toBe('none');
+});
+
+test('lets horizontal gestures inside a card continue through the column ribbon', async ({ page }) => {
+	const card = page.locator('.timeline-section');
+	const box = await card.boundingBox();
+	expect(box).not.toBeNull();
+	await page.mouse.move(box!.x + box!.width / 2, box!.y + 120);
+	await page.mouse.wheel(420, 0);
+	await expect.poll(() => page.locator('.column-strip').evaluate((strip) => strip.scrollLeft)).toBeGreaterThan(40);
+	await expect(page.locator('.column-strip')).toHaveClass(/is-scrolling/);
+	await expect(page.locator('.column-strip')).not.toHaveClass(/is-scrolling/, { timeout: 2_000 });
+});
+
+test('changes event details without horizontally scrolling the board', async ({ page }) => {
+	const strip = page.locator('.column-strip');
+	const initialScroll = await strip.evaluate((element) => element.scrollLeft);
+	await page.getByRole('article', { name: /Lunch/ }).getByRole('button').first().click();
+	await expect(page.locator('.right-rail .detail-panel').getByRole('heading', { name: 'Lunch' })).toBeVisible();
+	await expect(page.getByRole('article', { name: /Lunch/ })).toHaveClass(/selected/);
+	await expect.poll(() => strip.evaluate((element, start) => Math.abs(element.scrollLeft - start), initialScroll)).toBeLessThan(2);
+});
+
+test('aligns the overview and schedule grids on the same center line', async ({ page }) => {
+	const geometry = await page.evaluate(() => {
+		const overviewCards = Array.from(document.querySelectorAll<HTMLElement>('.today-column .glance-grid > *'));
+		const timeline = document.querySelector<HTMLElement>('.today-column .timeline-section')!;
+		const details = document.querySelector<HTMLElement>('.today-column .right-rail')!;
+		const first = overviewCards[0].getBoundingClientRect();
+		const second = overviewCards[1].getBoundingClientRect();
+		const timelineRect = timeline.getBoundingClientRect();
+		const detailsRect = details.getBoundingClientRect();
+		return {
+			leftEdges: Math.abs(first.left - timelineRect.left),
+			centerEdges: Math.abs(second.left - detailsRect.left),
+			rightEdges: Math.abs(second.right - detailsRect.right),
+			firstWidths: Math.abs(first.width - timelineRect.width),
+			secondWidths: Math.abs(second.width - detailsRect.width),
+			gapDifference: Math.abs((second.left - first.right) - (detailsRect.left - timelineRect.right))
+		};
+	});
+	for (const difference of Object.values(geometry)) expect(difference).toBeLessThan(1);
+});
+
+test('presents the sample inbox as ready without integration warnings', async ({ page }) => {
+	await page.getByRole('button', { name: /Attention$/ }).click();
+	await expect(page.getByRole('button', { name: 'Check sample messages' })).toBeVisible();
+	await expect(page.getByText(/Gmail status is unavailable|Gmail is not connected yet|could not refresh/i)).toHaveCount(0);
+});
+
+test('selects a day without shifting the fixed next-seven-day list', async ({ page }) => {
+	const waitForWeekToSettle = () => expect.poll(() => page.evaluate(() => {
+		const strip = document.querySelector<HTMLElement>('.column-strip')!;
+		const week = document.querySelector<HTMLElement>('.week-column')!;
+		const inset = Number.parseFloat(getComputedStyle(strip).scrollPaddingInlineStart) || 20;
+		return Math.abs(strip.scrollLeft - Math.max(0, week.offsetLeft - inset));
+	})).toBeLessThan(2);
+
+	await page.getByRole('button', { name: '7 days', exact: true }).click();
+	await waitForWeekToSettle();
+	const weekDays = page.locator('.week-grid > button');
+	const datesBefore = await weekDays.evaluateAll((buttons) => buttons.map((button) => (button as HTMLElement).dataset.date));
+	const chosenDate = datesBefore[2]!;
+	await weekDays.nth(2).click();
+
+	await expect(weekDays.nth(2)).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.locator('.today-column .date-switcher strong')).toHaveText(String(new Date(`${chosenDate}T12:00:00`).getDate()));
+	await expect(page.locator('.detail-panel')).toBeVisible();
+	expect(await weekDays.evaluateAll((buttons) => buttons.map((button) => (button as HTMLElement).dataset.date))).toEqual(datesBefore);
+
+	await page.getByRole('button', { name: '7 days', exact: true }).click();
+	await waitForWeekToSettle();
+	await weekDays.first().click();
+	await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
+	expect(await weekDays.evaluateAll((buttons) => buttons.map((button) => (button as HTMLElement).dataset.date))).toEqual(datesBefore);
+});
+
+test('keeps manual sideways scrolling free of navigation feedback', async ({ page }) => {
+	const result = await page.evaluate(async () => {
+		const strip = document.querySelector<HTMLElement>('.column-strip')!;
+		const target = document.querySelector<HTMLElement>('.attention-column')!;
+		const originalScrollTo = strip.scrollTo.bind(strip);
+		let programmaticCalls = 0;
+		strip.scrollTo = ((...args: Parameters<HTMLElement['scrollTo']>) => {
+			programmaticCalls += 1;
+			originalScrollTo(...args);
+		}) as HTMLElement['scrollTo'];
+		strip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+		const inset = Number.parseFloat(getComputedStyle(strip).scrollPaddingInlineStart) || 20;
+		strip.scrollLeft = target.offsetLeft - inset;
+		strip.dispatchEvent(new Event('scroll'));
+		await new Promise((resolve) => window.setTimeout(resolve, 420));
+		return {
+			programmaticCalls,
+			attentionActive: document.querySelector('.sidebar button.active')?.textContent?.includes('Attention') ?? false
+		};
+	});
+	expect(result.programmaticCalls).toBe(0);
+	expect(result.attentionActive).toBe(true);
+});
+
+test('glides to a selected column and settles precisely', async ({ page }, testInfo) => {
+	test.skip(testInfo.project.name !== 'ipad-landscape', 'Animation timing is measured once at the primary viewport.');
+	const geometry = await page.evaluate(() => {
+		const strip = document.querySelector<HTMLElement>('.column-strip')!;
+		const food = document.querySelector<HTMLElement>('.food-column')!;
+		const inset = Number.parseFloat(getComputedStyle(strip).scrollPaddingInlineStart) || 20;
+		return { start: strip.scrollLeft, target: Math.max(0, food.offsetLeft - inset) };
+	});
+	await page.getByRole('button', { name: 'Food', exact: true }).click();
+	await page.waitForTimeout(90);
+	const during = await page.locator('.column-strip').evaluate((strip) => strip.scrollLeft);
+	expect(during).toBeGreaterThan(geometry.start);
+	expect(during).toBeLessThan(geometry.target);
+	await expect.poll(() => page.locator('.column-strip').evaluate((strip, target) => Math.abs(strip.scrollLeft - target), geometry.target)).toBeLessThan(2);
 });
 
 test('imports Gmail previews and creates a draft only after visible approval', async ({ page }) => {
@@ -99,7 +294,7 @@ test('registers the WebMCP tool suite and tools update the same visible state', 
 	await expect(page.getByRole('article', { name: /Appointment with Dr Patel/ })).toBeVisible();
 });
 
-test('shows a complete approval preview before saving a message in the test outbox', async ({ page }) => {
+test('shows a complete approval preview before saving a suggested message locally', async ({ page }) => {
 	await page.getByRole('button', { name: 'Next day' }).click();
 	await page.getByRole('article', { name: /Appointment with Dr Patel/ }).getByRole('button').first().click();
 	await page.getByRole('button', { name: 'Ask to move this' }).click();
@@ -108,8 +303,8 @@ test('shows a complete approval preview before saving a message in the test outb
 	await expect(dialog.getByText('reception@greenlane.example', { exact: true })).toBeVisible();
 	await expect(page.getByText(/appointment remains at its current time/i)).toBeVisible();
 	if ((await page.viewportSize())?.width === 1024) await page.screenshot({ path: 'artifacts/audit-final-review-dialog.png' });
-	await page.getByRole('button', { name: 'Save this demo message' }).click();
-	await expect(page.getByText('change requested', { exact: true }).first()).toBeVisible();
+	await page.getByRole('button', { name: 'Save suggested message' }).click();
+	await expect(page.getByText('change requested', { exact: true })).not.toBeVisible();
 });
 
 test('keeps a stale request open and explains that nothing changed', async ({ page }) => {
@@ -120,7 +315,7 @@ test('keeps a stale request open and explains that nothing changed', async ({ pa
 		const scan = window.__registeredTools.find((tool) => tool.name === 'scan_mailbox_for_actions')!;
 		await scan.execute({});
 	});
-	await page.getByRole('button', { name: 'Save this demo message' }).click();
+	await page.getByRole('button', { name: 'Save suggested message' }).click();
 	await expect(page.getByRole('dialog')).toBeVisible();
 	await expect(page.getByRole('alert')).toContainText(/nothing changed/i);
 	await expect(page.getByRole('alert')).toContainText(/review a fresh plan/i);
@@ -139,7 +334,7 @@ test('reconciles a verified clinic cancellation and preserves a visible audit re
 		const applied = await call('apply_confirmed_cancellation', {
 			commitment_id: 'event-doctor', confirmation_note: 'Clinic confirmation email received.', confirmation_verified: true
 		});
-		const stored = JSON.parse(localStorage.getItem('clearday.household.v1') ?? '{}');
+		const stored = JSON.parse(localStorage.getItem('careweave.household.v1') ?? '{}');
 		return { refused, applied, status: stored.commitments.find((item: { id: string }) => item.id === 'event-doctor')?.status };
 	});
 
@@ -174,9 +369,9 @@ test('shows a truthful disconnected state when the host rejects part of registra
 	if ((await page.viewportSize())?.width === 1024) await page.screenshot({ path: 'artifacts/audit-final-webmcp-failure.png' });
 });
 
-test('lets a trusted relative offer help while Margaret keeps control', async ({ page }) => {
+test('lets a trusted relative offer help while the account owner keeps control', async ({ page }) => {
 	await page.getByRole('button', { name: 'Support', exact: true }).click();
-	await expect(page.getByRole('heading', { name: 'Supporting Margaret' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Family support' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Today is on track' })).toBeVisible();
 	await expect(page.getByText('Completed', { exact: true })).toBeVisible();
 	await expect(page.getByText(/Message contents, medical notes and detailed care notes are not shown/i)).toBeVisible();
@@ -184,7 +379,7 @@ test('lets a trusted relative offer help while Margaret keeps control', async ({
 	const appointmentCard = page.getByText('Come to the appointment').locator('xpath=ancestor::article');
 	await appointmentCard.getByRole('button', { name: 'Offer help' }).click();
 	await expect(appointmentCard.getByRole('button', { name: 'Offer sent' })).toBeDisabled();
-	await page.getByRole('button', { name: "Open Margaret's board" }).click();
+	await page.getByRole('button', { name: 'Open main board' }).click();
 	await page.getByRole('button', { name: /Attention/ }).click();
 	await expect(page.getByRole('heading', { name: 'Sam offered to help' })).toBeVisible();
 	await page.getByRole('button', { name: 'Accept help' }).click();
@@ -196,12 +391,13 @@ test('lets a trusted relative offer help while Margaret keeps control', async ({
 });
 
 test('shows truthful freshness and keeps the saved board usable offline', async ({ page, context }) => {
-	await expect(page.getByRole('status')).toContainText(/Updated just now/i);
+	const dayColumn = page.locator('.today-column');
+	await expect(dayColumn.getByRole('status')).toContainText(/Updated just now/i);
 	await context.setOffline(true);
-	await expect(page.getByRole('status')).toContainText(/Offline/i);
-	await expect(page.getByText('Elena visits')).toBeVisible();
+	await expect(dayColumn.getByRole('status')).toContainText(/Offline/i);
+	await expect(dayColumn.getByText('Elena visits')).toBeVisible();
 	await context.setOffline(false);
-	await expect(page.getByRole('status')).toContainText(/Updated/i);
+	await expect(dayColumn.getByRole('status')).toContainText(/Updated/i);
 });
 
 test('connects reminder acknowledgement to a supporter response', async ({ page }) => {
@@ -214,7 +410,7 @@ test('connects reminder acknowledgement to a supporter response', async ({ page 
 	await expect(page.getByRole('heading', { name: 'Lunch is ready in the fridge' })).toBeVisible();
 	await page.getByRole('button', { name: 'I can help' }).click();
 	await expect(page.getByText(/You said you are helping/i)).toBeVisible();
-	await page.getByRole('button', { name: "Open Margaret's board" }).click();
+	await page.getByRole('button', { name: 'Open main board' }).click();
 	await lunch.getByRole('button').first().click();
 	await expect(page.getByText(/trusted supporter has said they are helping/i)).toBeVisible();
 });
@@ -246,10 +442,25 @@ test('states the emergency boundary and offers direct human handoff', async ({ p
 });
 
 test('can quickly hide private wall-screen information', async ({ page }) => {
-	await page.getByRole('button', { name: 'Hide private details' }).click();
+	await page.getByRole('button', { name: 'Start privacy screensaver' }).click();
 	const cover = page.getByRole('dialog', { name: /details are hidden/ });
 	await expect(cover).toBeVisible();
-	await expect(page.getByText('Appointment with Dr Patel')).not.toBeVisible();
-	await cover.getByRole('button', { name: /Show Margaret's board/ }).click();
+	await expect(page.locator('.app-shell')).toHaveAttribute('aria-hidden', 'true');
+	await expect(cover.getByRole('region', { name: 'Next event' })).toBeVisible();
+	await expect(cover.getByRole('button', { name: 'Pause motion' })).toHaveCount(0);
+	await expect(cover.locator('.screensaver-mark')).toHaveCount(0);
+	await cover.getByRole('button', { name: 'Show main board' }).click();
 	await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
+});
+
+test('animates the forecast while the privacy screen is active', async ({ page }) => {
+	test.setTimeout(45_000);
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await page.getByRole('button', { name: 'Start privacy screensaver' }).click();
+	const sky = page.locator('canvas.weather-sky');
+	await expect(sky).toBeVisible();
+	const before = Number(await sky.getAttribute('data-frame'));
+	await page.waitForTimeout(500);
+	const after = Number(await sky.getAttribute('data-frame'));
+	expect(after).toBeGreaterThan(before);
 });

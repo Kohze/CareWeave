@@ -12,7 +12,7 @@ describe('reviewable appointment actions', () => {
 		expect(household.snapshot().outbox).toHaveLength(0);
 	});
 
-	it('saves a demo message only after approval and marks a request without moving the time', () => {
+	it('saves a suggested message without changing the confirmed appointment', () => {
 		const original = household.snapshot().commitments.find((item) => item.id === 'event-doctor')!;
 		const result = household.createAppointmentRequestPlan('event-doctor', 'reschedule', 'Please offer another morning appointment.');
 		const planId = result.data!.id;
@@ -20,7 +20,7 @@ describe('reviewable appointment actions', () => {
 		const after = household.snapshot();
 		const appointment = after.commitments.find((item) => item.id === 'event-doctor')!;
 		expect(approved.success).toBe(true);
-		expect(appointment.status).toBe('change_requested');
+		expect(appointment.status).toBe('confirmed');
 		expect(appointment.startAt).toBe(original.startAt);
 		expect(after.outbox).toHaveLength(1);
 		expect(after.outbox[0].status).toBe('saved_demo');
@@ -36,13 +36,13 @@ describe('reviewable appointment actions', () => {
 		expect(household.snapshot().outbox).toHaveLength(0);
 	});
 
-	it('applies a verified cancellation only after the request was approved', () => {
+	it('applies a cancellation only after external confirmation is explicitly verified', () => {
 		const original = household.snapshot().commitments.find((item) => item.id === 'event-doctor')!;
 		expect(household.applyConfirmedCancellation('event-doctor', 'Clinic confirmed by phone.').success).toBe(false);
 
 		const draft = household.createAppointmentRequestPlan('event-doctor', 'cancel', 'Please cancel this appointment and confirm.');
 		expect(household.approvePlan(draft.data!.id).success).toBe(true);
-		const applied = household.applyConfirmedCancellation('event-doctor', 'Verified clinic email received.');
+		const applied = household.applyConfirmedCancellation('event-doctor', 'Verified clinic email received.', true);
 		const appointment = household.snapshot().commitments.find((item) => item.id === 'event-doctor')!;
 
 		expect(applied.success).toBe(true);
@@ -80,6 +80,7 @@ describe('reviewable appointment actions', () => {
 		const approved = household.approvePlan(draft.data!.id, { mode: 'gmail_draft', providerId: 'draft-123' });
 		expect(approved.success).toBe(true);
 		expect(household.snapshot().outbox[0]).toMatchObject({ status: 'draft', providerId: 'draft-123' });
+		expect(household.snapshot().commitments.find((item) => item.id === 'event-doctor')?.status).toBe('confirmed');
 		expect(approved.summary).toContain('Nothing was sent');
 	});
 

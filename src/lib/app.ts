@@ -19,8 +19,10 @@ import type {
 	UiState
 } from './types';
 
-const STORAGE_KEY = 'clearday.household.v1';
-const HISTORY_KEY = 'clearday.household.history.v1';
+const STORAGE_KEY = 'careweave.household.v1';
+const HISTORY_KEY = 'careweave.household.history.v1';
+const LEGACY_STORAGE_KEY = 'clearday.household.v1';
+const LEGACY_HISTORY_KEY = 'clearday.household.history.v1';
 const MAX_HISTORY = 12;
 
 function id(prefix: string): string {
@@ -38,7 +40,7 @@ function save(data: AppData): void {
 function readHistory(): AppData[] {
 	if (typeof localStorage === 'undefined') return [];
 	try {
-		return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]') as AppData[];
+		return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? localStorage.getItem(LEGACY_HISTORY_KEY) ?? '[]') as AppData[];
 	} catch {
 		return [];
 	}
@@ -64,7 +66,7 @@ export const ui = writable<UiState>({
 	view: 'today',
 	selectedDate: localDateKey(),
 	highlightedCommitmentIds: [],
-	announcement: 'ClearDay is ready.'
+	announcement: 'CareWeave is ready.'
 });
 
 function mutate(label: string, change: (draft: AppData) => void, trackUndo = true): AppData {
@@ -89,9 +91,17 @@ export const household = {
 	initialize(): void {
 		if (typeof localStorage === 'undefined') return;
 		try {
-			const saved = localStorage.getItem(STORAGE_KEY);
+			const saved = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
 			if (saved) {
 				const restored = JSON.parse(saved) as AppData;
+				const isLegacyDemoHousehold = restored.people?.some((person) => person.id === 'person-sam')
+					&& restored.sources?.some((source) => source.id === 'mail-clinic' && source.provider === 'demo_mailbox');
+				if (isLegacyDemoHousehold && restored.preferences?.ownerName === 'Margaret') {
+					restored.preferences.ownerName = '';
+					for (const source of restored.sources) {
+						if (source.to === 'margaret@example.test') source.to = 'owner@example.test';
+					}
+				}
 				restored.preferences.textSize ??= 'standard';
 				restored.preferences.guidedMode ??= false;
 				restored.preferences.language ??= 'en';
@@ -102,6 +112,13 @@ export const household = {
 				restored.careVisitUpdates ??= seededData.careVisitUpdates;
 				restored.reminders ??= seededData.reminders;
 				restored.dataFeeds ??= seededData.dataFeeds;
+				if (isLegacyDemoHousehold) {
+					const refreshedAt = new Date().toISOString();
+					for (const feed of restored.dataFeeds) {
+						feed.status = 'current';
+						feed.lastSuccessfulSyncAt = refreshedAt;
+					}
+				}
 				const seededPlaces = seededData.places;
 				for (const place of restored.places) {
 					const fallback = seededPlaces.find((candidate) => candidate.id === place.id);
@@ -113,6 +130,7 @@ export const household = {
 					commitment.notes ??= fallback?.notes;
 					commitment.timeZone ??= fallback?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
 				}
+				save(restored);
 				dataStore.set(restored);
 			}
 			else save(get(dataStore));
@@ -410,15 +428,16 @@ export const household = {
 				supportOfferId: offer.id,
 				createdAt: offer.createdAt
 			});
-			activity(data, 'support', 'Help offered', `${supporter.name} offered ${category.replace('_', ' ')} help. Margaret still decides.`);
+			activity(data, 'support', 'Help offered', `${supporter.name} offered ${category.replace('_', ' ')} help. The account owner still decides.`);
 		});
+		const decisionMaker = current.preferences.ownerName.trim() || 'The account owner';
 		return {
 			success: true,
-			summary: `The offer from ${supporter.name} is waiting for ${current.preferences.ownerName}'s response. No plan was changed.`,
+			summary: `The offer from ${supporter.name} is waiting for a response. No plan was changed.`,
 			stateRevision: next.revision,
 			data: offer,
 			affectedIds: [offer.id, attentionId],
-			nextSuggestedAction: `${current.preferences.ownerName} can accept or decline the offer on her board.`
+			nextSuggestedAction: `${decisionMaker} can accept or decline the offer on the main board.`
 		};
 	},
 
@@ -477,7 +496,7 @@ export const household = {
 		if (current.sources.some((source) => source.id === sourceId)) return { success: false, summary: 'That source message has already been imported.', stateRevision: current.revision };
 		const attentionId = id('attention');
 		const next = mutate(`New ${input.category.replaceAll('_', ' ')} item added for review.`, (data) => {
-			data.sources.unshift({ id: sourceId, provider: input.provider, from: input.from, to: 'ClearDay household', subject: input.subject, receivedAt: input.receivedAt, summary: input.summary, untrusted: true });
+			data.sources.unshift({ id: sourceId, provider: input.provider, from: input.from, to: 'CareWeave household', subject: input.subject, receivedAt: input.receivedAt, summary: input.summary, untrusted: true });
 			data.attentionItems.unshift({ id: attentionId, category: input.category, title: input.subject, summary: input.summary, requestedAction: input.requestedAction, confidence: input.confidence, status: 'new', sourceId, createdAt: new Date().toISOString() });
 			activity(data, 'mail_ingest', 'Email action imported', `${input.category.replaceAll('_', ' ')} from ${input.provider}; awaiting human review.`);
 		});
@@ -553,10 +572,8 @@ export const household = {
 		const recipient = to ?? participant?.email;
 		if (!recipient) return { success: false, summary: 'No verified recipient is available.', stateRevision: current.revision };
 		const subject = request === 'cancel' ? `Cancellation request: ${item.title}` : `Request to reschedule: ${item.title}`;
-		const desiredStatus: CommitmentStatus = request === 'cancel' ? 'cancellation_requested' : 'change_requested';
 		const steps: PlanStep[] = [
-			{ id: id('step'), type: 'send_email', label: deliveryMode === 'gmail_draft' ? `Create Gmail draft to ${recipient}` : `Save test email to ${recipient}`, payload: { to: recipient, subject, body: message } },
-			{ id: id('step'), type: 'update_commitment', label: `Mark as ${desiredStatus.replace('_', ' ')}`, payload: { commitmentId, status: desiredStatus } }
+			{ id: id('step'), type: 'send_email', label: deliveryMode === 'gmail_draft' ? `Create Gmail draft to ${recipient}` : `Save suggested message to ${recipient}`, payload: { to: recipient, subject, body: message } }
 		];
 		const plan: ActionPlan = {
 			id: id('plan'),
@@ -567,7 +584,7 @@ export const household = {
 			expiresAt: planExpiry(),
 			steps,
 			deliveryMode,
-			warnings: ['The appointment remains at its current time until the clinic confirms the change.', deliveryMode === 'gmail_draft' ? 'Approval creates a Gmail draft only. Open Gmail to review and send it.' : 'For this demonstration, the message will be saved in the test outbox. No real email will be sent.']
+			warnings: ['The appointment remains at its current time until the clinic confirms the change.', deliveryMode === 'gmail_draft' ? 'Approval creates a Gmail draft only. Open Gmail to review and send it.' : 'Approval saves this as a local suggestion only. Nothing will be sent.']
 		};
 		const next = mutate(`Review plan: ${plan.title}.`, (data) => {
 			data.plans.unshift(plan);
@@ -594,13 +611,12 @@ export const household = {
 		if (message.trim().length < 2 || message.length > 2000) return { success: false, summary: 'The reply must be between 2 and 2,000 characters.', stateRevision: current.revision };
 		const email = source.from.match(/<([^>]+)>/)?.[1] ?? source.from;
 		const steps: PlanStep[] = [
-			{ id: id('step'), type: 'send_email', label: deliveryMode === 'gmail_draft' ? `Create Gmail draft to ${email}` : `Save test reply to ${email}`, payload: { to: email, subject: `Re: ${source.subject}`, body: message } },
-			{ id: id('step'), type: 'resolve_attention', label: 'Mark this item resolved', payload: { attentionId } }
+			{ id: id('step'), type: 'send_email', label: deliveryMode === 'gmail_draft' ? `Create Gmail draft to ${email}` : `Save suggested reply to ${email}`, payload: { to: email, subject: `Re: ${source.subject}`, body: message } }
 		];
 		const plan: ActionPlan = {
 			id: id('plan'), title: `Reply about ${attention.title}`, status: 'draft', baseStateRevision: current.revision + 1,
 			createdAt: new Date().toISOString(), expiresAt: planExpiry(), steps, deliveryMode,
-			warnings: ['Message content can be wrong or misleading. Verify the recipient and message before approving.', deliveryMode === 'gmail_draft' ? 'Approval creates a Gmail draft only. Open Gmail to review and send it.' : 'For this demonstration, the reply will be saved in the test outbox. No real email will be sent.']
+			warnings: ['Message content can be wrong or misleading. Verify the recipient and message before approving.', deliveryMode === 'gmail_draft' ? 'Approval creates a Gmail draft only. Open Gmail to review and send it.' : 'Approval saves this as a local suggestion only. Nothing will be sent.']
 		};
 		const next = mutate(`Review plan: ${plan.title}.`, (data) => {
 			data.plans.unshift(plan);
@@ -636,10 +652,10 @@ export const household = {
 				}
 			}
 			data.plans.find((candidate) => candidate.id === planId)!.status = 'approved';
-			activity(data, 'approval', delivery?.mode === 'gmail_draft' ? 'Gmail draft created' : 'Plan approved', delivery?.mode === 'gmail_draft' ? `${plan.title}. A Gmail draft was created; nothing was sent.` : `${plan.title}. ${plan.steps.length} steps completed in the demo sandbox.`);
+			activity(data, 'approval', delivery?.mode === 'gmail_draft' ? 'Gmail draft created' : 'Suggestion saved', delivery?.mode === 'gmail_draft' ? `${plan.title}. A Gmail draft was created; nothing was sent.` : `${plan.title}. A suggested message was saved locally; nothing was sent.`);
 		}, false);
 		ui.update((value) => ({ ...value, activePlanId: undefined }));
-		return { success: true, summary: delivery?.mode === 'gmail_draft' ? `${plan.title} was approved. A Gmail draft was created and the board was updated. Nothing was sent.` : `${plan.title} was approved. The message was saved in the test outbox and the board was updated. No real email was sent in this demonstration.`, stateRevision: next.revision, affectedIds: affected, nextSuggestedAction: delivery?.mode === 'gmail_draft' ? 'Open Gmail to review and send the draft.' : 'Wait for external confirmation before changing the appointment time.' };
+		return { success: true, summary: delivery?.mode === 'gmail_draft' ? `${plan.title} was approved. A Gmail draft was created. Nothing was sent, and the appointment or attention item remains unchanged.` : `${plan.title} was approved. A suggested message was saved locally. Nothing was sent, and the appointment or attention item remains unchanged.`, stateRevision: next.revision, affectedIds: affected, nextSuggestedAction: delivery?.mode === 'gmail_draft' ? 'Open Gmail to review and send the draft.' : 'Copy the suggestion into your email app if you want to send it.' };
 	},
 
 	discardPlan(planId: string): ToolResult {
@@ -670,13 +686,13 @@ export const household = {
 		return { success: true, summary: `The confirmed new time was applied to ${item.title}.`, stateRevision: next.revision, affectedIds: [commitmentId] };
 	},
 
-	applyConfirmedCancellation(commitmentId: string, confirmationNote: string): ToolResult {
+	applyConfirmedCancellation(commitmentId: string, confirmationNote: string, confirmationVerified = false): ToolResult {
 		const current = get(dataStore);
 		const item = current.commitments.find((candidate) => candidate.id === commitmentId);
 		if (!item) return { success: false, summary: 'Appointment not found.', stateRevision: current.revision };
 		if (item.status === 'cancelled') return { success: false, summary: 'That appointment is already cancelled.', stateRevision: current.revision };
-		if (item.status !== 'cancellation_requested') {
-			return { success: false, summary: 'No cancellation request is awaiting confirmation for that appointment. Nothing changed.', stateRevision: current.revision };
+		if (!confirmationVerified) {
+			return { success: false, summary: 'Verified external cancellation is required. Nothing changed.', stateRevision: current.revision };
 		}
 		if (confirmationNote.trim().length < 3 || confirmationNote.length > 500) {
 			return { success: false, summary: 'A short verification note is required.', stateRevision: current.revision };

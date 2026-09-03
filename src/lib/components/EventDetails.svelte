@@ -11,6 +11,7 @@
 		sources,
 		reminder,
 		onClose,
+		showClose = true,
 		onTogglePrep,
 		onRoute,
 		onRequest,
@@ -22,6 +23,7 @@
 		sources: SourceMessage[];
 		reminder?: Reminder;
 		onClose: () => void;
+		showClose?: boolean;
 		onTogglePrep: (prepId: string) => void;
 		onRoute: () => void;
 		onRequest: (request: 'reschedule' | 'cancel') => void;
@@ -58,7 +60,7 @@
 <section class="detail-panel" id={`event-details-${item.id}`} aria-labelledby="event-details-title" tabindex="-1">
 	<div class="panel-heading">
 		<div><span class="eyebrow">{kindLabels[item.kind]}</span><h2 id="event-details-title">{item.title}</h2></div>
-		<button class="icon-button" aria-label="Close details" onclick={onClose}>×</button>
+		{#if showClose}<button class="icon-button" aria-label="Close details" onclick={onClose}>×</button>{/if}
 	</div>
 
 	<div class="detail-about">
@@ -84,7 +86,7 @@
 		{/if}
 		{#if participants.length}
 			<div>
-				<dt><Icon name="care" size={23} /> Who</dt>
+				<dt><Icon name="who" size={23} /> Who</dt>
 				<dd class="people-list">
 					{#each participants as person}
 						<span><strong>{person.name}</strong><small>{person.role}</small>{#if person.phone}<small>{person.phone}</small>{/if}{#if person.email}<small>{person.email}</small>{/if}</span>

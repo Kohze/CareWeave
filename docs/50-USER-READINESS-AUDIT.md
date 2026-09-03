@@ -1,8 +1,8 @@
-# ClearDay 50-user readiness audit
+# CareWeave 50-user readiness audit
 
 Audit date: 2 September 2026  
 Scope: the current fictional SvelteKit/WebMCP challenge build  
-Primary question: what is still needed for older adults and trusted supporters without turning ClearDay into a complex care-management system?
+Primary question: what is still needed for older adults and trusted supporters without turning CareWeave into a complex care-management system?
 
 ## Executive result
 
@@ -14,7 +14,7 @@ Fifty deliberately difficult example-user scenarios were walked through against 
 | Partial | 23 | The basic path works, but an important edge, assurance, or production control is missing. |
 | Blocked | 13 | The task cannot yet be completed safely or truthfully in the current prototype. |
 
-This is not a prediction that only 14% of real older adults could use ClearDay. The sample intentionally over-represents difficult combinations and production edge cases. It is a design stress test, not user research and not a clinical-risk assessment.
+This is not a prediction that only 14% of real older adults could use CareWeave. The sample intentionally over-represents difficult combinations and production edge cases. It is a design stress test, not user research and not a clinical-risk assessment.
 
 The core dayboard should stay simple. Most gaps can be addressed with four additions to existing surfaces:
 
@@ -33,7 +33,7 @@ Each example has a primary limitation or context, a realistic high-value task, a
 - **Partial** means a path exists but lacks a material assurance, accessibility, or recovery capability.
 - **Blocked** means pretending to support the task would be unsafe or misleading.
 
-The rescored review uses the current UI and source model, 62 passing browser tests across iPad landscape, iPad portrait, and mobile, 38 passing domain/WebMCP/OAuth tests, the WCAG audit, and the standards cross-check at the end of this document. Synthetic users cannot reveal comprehension, trust, fatigue, speech-recognition quality, or real-world error rates; moderated sessions remain mandatory.
+The rescored review uses the current UI and source model, 65 passing browser tests across iPad landscape, iPad portrait, and mobile, 38 passing domain/WebMCP/OAuth tests, the WCAG audit, and the standards cross-check at the end of this document. Synthetic users cannot reveal comprehension, trust, fatigue, speech-recognition quality, or real-world error rates; moderated sessions remain mandatory.
 
 ## Remaining concrete gaps after implementation
 
@@ -200,7 +200,7 @@ This improves cases 29, 32, and 44-47 while leaving the day view unchanged. Prov
 
 ## What not to add
 
-Keeping ClearDay small is a product safety choice. Do not add these as native “smart” features for the challenge:
+Keeping CareWeave small is a product safety choice. Do not add these as native “smart” features for the challenge:
 
 - medication dosing or adherence claims;
 - diagnosis, treatment, nutrition, or allergy recommendations;
@@ -228,9 +228,9 @@ This preserves the current mental model: **today, things to decide, and people w
 ## Standards and comparable patterns we should adopt
 
 - [W3C guidance for older users](https://www.w3.org/WAI/older-users/) says older-user needs overlap vision, dexterity, hearing, and cognitive accessibility. Automated WCAG checks are necessary but do not replace human testing.
-- [WCAG 2.2](https://www.w3.org/TR/WCAG22/) remains the accessibility baseline. ClearDay should retain its stronger 44px target policy, persistent alternatives, focus safety, reflow, and no time pressure.
+- [WCAG 2.2](https://www.w3.org/TR/WCAG22/) remains the accessibility baseline. CareWeave should retain its stronger 44px target policy, persistent alternatives, focus safety, reflow, and no time pressure.
 - [Apple Assistive Access for iPad](https://support.apple.com/guide/assistive-access-ipad/set-up-assistive-access-devcd5016d31/ipados) provides a useful precedent: larger and more focused experiences are configured with a trusted supporter, with row/grid choices and simplified navigation.
-- [NHS family and carer access](https://www.nhs.uk/nhs-services/gps/health-services-for-someone-else-family-carer-access/give-someone-access-health-services/) treats support as explicit proxy access that can cover all or only part of a record and does not remove the person's own access. ClearDay needs the same explicit grant/revoke principle.
+- [NHS family and carer access](https://www.nhs.uk/nhs-services/gps/health-services-for-someone-else-family-carer-access/give-someone-access-health-services/) treats support as explicit proxy access that can cover all or only part of a record and does not remove the person's own access. CareWeave needs the same explicit grant/revoke principle.
 - [ICO special-category guidance](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/special-category-data/what-are-the-rules-on-special-category-data/) reinforces that health data needs an Article 6 basis plus an Article 9 condition, with data minimisation and stricter rules around significant automated decisions. Legal implementation depends on deployment jurisdiction.
 - [RFC 5545 iCalendar](https://www.rfc-editor.org/info/rfc5545/) and [RFC 4791 CalDAV](https://www.rfc-editor.org/info/rfc4791/) are the interoperability floor for recurrences, time zones, alarms, and calendar access.
 - For clinical integrations, use [FHIR Appointment](https://hl7.org/fhir/R5/appointment.html), [RelatedPerson](https://hl7.org/fhir/R5/relatedperson.html), [CarePlan](https://hl7.org/fhir/R5/careplan.html), Consent, Task, and [Provenance](https://hl7.org/fhir/R5/provenance.html) as mapping targets rather than inventing incompatible medical semantics.
