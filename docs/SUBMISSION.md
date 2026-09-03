@@ -33,11 +33,11 @@ Without WebMCP, an assistant would have to infer dates, event states, and contro
 
 ## How WebMCP is implemented
 
-CareWeave feature-detects `document.modelContext.registerTool` and registers 32 imperative site tools. Runtime schemas validate inputs; tool annotations distinguish read-only, mutating, and untrusted-content operations; all handlers reuse the same domain functions as the touch UI; revisions prevent stale writes; and partial registration is rolled back. The judged path requires no account or database: each judge receives deterministic, resettable fictional state in the same open page used by the agent.
+CareWeave feature-detects `document.modelContext.registerTool` and registers 32 imperative site tools. Runtime schemas validate inputs; `readOnlyHint`, `untrustedContentHint`, and `consequentialHint` make safety boundaries machine-readable; all handlers reuse the same domain functions as the touch UI; revisions prevent stale writes; and partial registration is rolled back. The judged path requires no account or database: each judge receives deterministic, resettable fictional state in the same open page used by the agent.
 
 ## Judging alignment
 
-- WebMCP leverage: 32 narrow imperative tools; runtime input validation; rollback-safe registration; read-only and untrusted-content annotations; UI and agent share domain functions and visible focus.
+- WebMCP leverage: 32 narrow imperative tools; runtime input validation; rollback-safe registration; read-only, untrusted-content, and consequential annotations; UI and agent share domain functions and visible focus; 10/10 steps passed in the official Chrome WebMCP smoke runner.
 - Execution: polished responsive PWA, offline shell, deterministic seed, tests, explicit state machine, audit history, undo.
 - Impact: reduces cognitive load and protects autonomy for older adults while coordinating carers, family, clinics, food, and travel.
 - Creativity: treats a calendar as a household operating system with “general input, calm output,” rather than adding chat to a conventional planner.
@@ -63,18 +63,16 @@ The exact automated journey and the final production-host checklist are document
 - Use [`audit-final-careweave-route.png`](../artifacts/audit-final-careweave-route.png) to prove shared visual focus and route display.
 - Use [`audit-final-review-dialog.png`](../artifacts/audit-final-review-dialog.png) to prove the human confirmation boundary.
 - Use [`audit-final-family-support.png`](../artifacts/audit-final-family-support.png) to show the privacy-limited supporter experience.
-- Add the public YouTube URL after uploading the narrated demo; do not add a placeholder link to the public README.
 
-## Final external checklist
+## Submission configuration
 
 Current deadline: **4 September 2026 at 10:00 AM GMT+2**.
 
-- Confirm [the production deployment](https://care-weave.vercel.app/) loads over HTTPS.
-- Push this repository publicly with the MIT license visible.
-- Test the deployed top-level page in the supported ChatGPT browser.
-- Complete every item in the [production-host smoke test](WEBMCP_EVALS.md#final-production-host-smoke-test).
-- Record and upload the under-three-minute video with audible narration.
-- Add `https://care-weave.vercel.app/`, the public repository URL, video URL, team details, technologies, and this description to Devpost.
-- Verify every link in a signed-out browser before submitting.
-- Keep Supabase/Auth integration out of the submitted build; it is post-challenge production work, not part of the judged WebMCP path.
-- After the submission deadline, do not change the Devpost entry, submitted repository, or live deployment until judging ends. Continue only in a separate fork.
+- Hosted application: `https://care-weave.vercel.app/`
+- Public source: `https://github.com/Kohze/CareWeave`
+- License: MIT
+- Judge access: account-free fictional household
+- Demonstration: narrated video under three minutes following [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md)
+- WebMCP evidence: [`WEBMCP_EVALS.md`](WEBMCP_EVALS.md) and [`../evals/careweave.json`](../evals/careweave.json)
+- Production scope: Supabase/Auth remains post-challenge work and is not part of the judged WebMCP path.
+- Submission freeze: the submitted repository and deployment remain unchanged during judging; subsequent development uses a separate fork.

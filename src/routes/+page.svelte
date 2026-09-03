@@ -659,7 +659,7 @@
 								{/if}
 							{:else}
 								{#each visibleDayItems as item (item.id)}
-									<EventCard {item} careVisitUpdate={careVisitUpdateFor(item)} reminder={$household.reminders.find((reminder) => reminder.commitmentId === baseCommitmentId(item.id))} place={$household.places.find((place) => place.id === item.locationId)} highlighted={$ui.highlightedCommitmentIds.includes(item.id)} selected={displayedDetailItem?.id === item.id && !$ui.showRouteForId} onSelect={() => selectCommitment(item.id)} onRoute={() => showRoute(item.id)} onRequest={() => requestAppointment(baseCommitmentId(item.id))} />
+									<EventCard {item} careVisitUpdate={careVisitUpdateFor(item)} reminder={$household.reminders.find((reminder) => reminder.commitmentId === baseCommitmentId(item.id))} place={$household.places.find((place) => place.id === item.locationId)} highlighted={$ui.highlightedCommitmentIds.includes(item.id)} selected={displayedDetailItem?.id === item.id && !$ui.showRouteForId} onSelect={() => selectCommitment(item.id)} onRequest={() => requestAppointment(baseCommitmentId(item.id))} />
 								{/each}
 							{/if}
 						</div>

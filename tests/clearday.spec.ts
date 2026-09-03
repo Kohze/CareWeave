@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 
 declare global {
 	interface Window {
-		__registeredTools: Array<{ name: string; execute: (input: Record<string, unknown>) => Promise<unknown> }>;
+		__registeredTools: Array<{ name: string; annotations?: Record<string, boolean>; execute: (input: Record<string, unknown>) => Promise<unknown> }>;
 	}
 }
 
@@ -40,7 +40,7 @@ test.beforeEach(async ({ page }) => {
 		Object.defineProperty(document, 'modelContext', {
 			configurable: true,
 			value: {
-				registerTool: async (tool: { name: string; execute: (input: Record<string, unknown>) => Promise<unknown> }) => {
+				registerTool: async (tool: { name: string; annotations?: Record<string, boolean>; execute: (input: Record<string, unknown>) => Promise<unknown> }) => {
 					window.__registeredTools.push(tool);
 				}
 			}
@@ -298,6 +298,9 @@ test('shows every WebMCP tool from the assistant status button', async ({ page }
 	await expect(catalogue.locator('.tool-list details')).toHaveCount(32);
 	await catalogue.getByText('get_day_brief', { exact: true }).click();
 	await expect(catalogue.getByText(/Read a concise, calm household brief/)).toBeVisible();
+	const approvalTool = catalogue.locator('details').filter({ hasText: 'approve_action_plan' });
+	await approvalTool.getByText('approve_action_plan', { exact: true }).click();
+	await expect(approvalTool.getByText('Consequential action', { exact: true })).toBeVisible();
 	if ((await page.viewportSize())?.width === 1024) await page.screenshot({ path: 'artifacts/audit-final-webmcp-tools.png' });
 	await catalogue.getByRole('button', { name: 'Close WebMCP tools' }).click();
 	await expect(statusButton).toBeFocused();
@@ -334,6 +337,13 @@ test('turns dictated words into a reviewable reply without sending', async ({ pa
 	await prepareReply.click();
 	const composer = page.getByRole('dialog', { name: /Reply to Choose a milk substitute/ });
 	await expect(composer).toBeVisible();
+	const composerAlignment = await composer.evaluate((dialog) => {
+		const dictate = dialog.querySelector<HTMLElement>('.dictate-button')!.getBoundingClientRect();
+		const privacy = dialog.querySelector<HTMLElement>('.privacy-note')!.getBoundingClientRect();
+		return { left: Math.abs(dictate.left - privacy.left), right: Math.abs(dictate.right - privacy.right) };
+	});
+	expect(composerAlignment.left).toBeLessThan(2);
+	expect(composerAlignment.right).toBeLessThan(2);
 	await composer.getByRole('button', { name: /Speak your reply/ }).click();
 	await expect(composer.getByLabel('Your reply')).toHaveValue('Hello, the smaller bottle is fine. Thank you.');
 	await page.screenshot({ path: 'artifacts/audit-final-voice-reply-composer.png' });
@@ -361,6 +371,20 @@ test('registers the WebMCP tool suite and tools update the same visible state', 
 	expect(names).toContain('respond_to_help_request');
 	expect(names).toContain('check_calendar_integrity');
 	expect(names).toContain('record_care_visit_status');
+	const consequential = await page.evaluate(() => window.__registeredTools
+		.filter((tool) => tool.annotations?.consequentialHint === true)
+		.map((tool) => tool.name));
+	expect(consequential).toEqual([
+		'respond_to_reminder',
+		'respond_to_help_request',
+		'record_care_visit_status',
+		'update_support_offer_fulfillment',
+		'approve_action_plan',
+		'apply_confirmed_change',
+		'apply_confirmed_cancellation',
+		'undo_last_change',
+		'reset_demo'
+	]);
 
 	const tomorrow = await page.evaluate(() => {
 		const date = new Date();

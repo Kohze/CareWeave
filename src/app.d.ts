@@ -28,7 +28,11 @@ declare global {
           title?: string;
           description: string;
           inputSchema?: Record<string, unknown>;
-          annotations?: Record<string, boolean>;
+          annotations?: {
+            readOnlyHint?: boolean;
+            untrustedContentHint?: boolean;
+            consequentialHint?: boolean;
+          };
           execute: (input: Record<string, unknown>) => Promise<unknown> | unknown;
         },
         options?: { signal?: AbortSignal }

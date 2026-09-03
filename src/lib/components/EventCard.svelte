@@ -11,7 +11,6 @@
 		highlighted = false,
 		selected = false,
 		onSelect,
-		onRoute,
 		onRequest
 	}: {
 		item: Commitment;
@@ -21,7 +20,6 @@
 		highlighted?: boolean;
 		selected?: boolean;
 		onSelect: () => void;
-		onRoute: () => void;
 		onRequest: () => void;
 	} = $props();
 
@@ -43,10 +41,9 @@
 		</span>
 		<Icon name="arrow" size={22} />
 	</button>
-	{#if item.kind === 'health' || item.locationId}
+	{#if item.kind === 'health'}
 		<div class="event-actions">
-			{#if item.locationId}<button onclick={onRoute}><Icon name="route" size={20} /> Route</button>{/if}
-			{#if item.kind === 'health'}<button onclick={onRequest}>Ask to change</button>{/if}
+			<button onclick={onRequest}>Ask to change</button>
 		</div>
 	{/if}
 </article>

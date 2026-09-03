@@ -7,7 +7,7 @@ Decision: submit the account-free fictional build; defer database integration.
 
 CareWeave is a strong fit for the challenge because WebMCP is part of the product interaction, not an integration badge. The agent reads structured household state, changes the same visual focus the person sees, applies domain-specific planning rules, and prepares consequential work behind a human review boundary.
 
-Supabase would be helpful for a production service with real households, multiple devices, and authenticated supporters. It does not improve the judged same-page WebMCP loop. Adding it before submission would introduce account friction, session and routing changes, RLS risk, service-worker changes, and more ways for a judge's first run to fail. Create and test it separately if useful, but do not merge it into the submission branch until judging is complete.
+Supabase would be helpful for a production service with real households, multiple devices, and authenticated supporters. It does not improve the judged same-page WebMCP loop. Adding it to the challenge build would introduce account friction, session and routing changes, RLS risk, service-worker changes, and more ways for a judge's first run to fail. It remains separate production groundwork rather than part of the submitted experience.
 
 ## Criteria scorecard
 
@@ -39,18 +39,19 @@ The video should tell one story rather than inventory features:
 | Claim cross-device synchronization now | **No** | It is not implemented and would weaken trust. |
 | Integrate Supabase after judging | **Yes** | Necessary before real household data or multi-device production use. |
 
-## Highest-priority submission work
+## Submission presentation
 
-1. Test the deployed URL inside ChatGPT's in-app browser and confirm the site tools are discovered and the three core prompts complete successfully.
-2. Record the under-three-minute demo around the single workflow above; show real WebMCP calls and visible UI effects.
-3. Keep the repository public, ensure the MIT license is detected at the repository top level, and make the live URL and judge path impossible to miss.
-4. Verify the production deployment in a fresh signed-out session and clear any stale service-worker cache before recording.
-5. Use the submission description in `docs/SUBMISSION.md`; do not lead with Gmail, Supabase, the tool count, or future integrations.
+1. The deployed URL opens directly into the fictional household and the three core prompts form the judge path.
+2. The under-three-minute demo follows one coherent workflow with visible WebMCP calls and UI effects.
+3. The public repository presents the MIT license, live URL, judge path, and reproducible evidence prominently.
+4. The submission description in `docs/SUBMISSION.md` leads with the human problem and shared WebMCP experience rather than optional integrations.
 
 ## Completed repository hardening
 
 - Added a task-level browser evaluation for the exact judge journey, including visible route focus and an assertion that drafting leaves the confirmed appointment unchanged.
-- Added an explicit evaluation matrix and an honest, separate checklist for the still-required production ChatGPT host test.
+- Added an explicit evaluation matrix and a compatible-host judge journey.
+- Added the official-format six-journey WebMCP dataset; Chrome's browser-native smoke runner passed 10/10 tool steps.
+- Added `consequentialHint` to nine meaningful decision and reconciliation tools, alongside the existing read-only and untrusted-content annotations.
 - Clarified every fictional supporter/carer write tool so its description does not imply demo-supplied IDs are authenticated production identities.
 - Created a 1672×941 Devpost cover and linked the strongest supporting screenshots from the submission package.
 
@@ -64,7 +65,7 @@ the Devpost entry, submitted repository, or live site until winners are
 announced. If development continues, fork the repository and use a separate
 deployment so the submitted artifacts remain unchanged.
 
-## Avoid before submission
+## Scope discipline
 
 - Do not add authentication, database persistence, or another provider integration.
 - Do not make optional Gmail or voice configuration necessary to understand the product.

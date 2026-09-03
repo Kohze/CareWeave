@@ -251,6 +251,7 @@ export function careWeaveTools(): CareWeaveToolDefinition[] {
 			title: 'Respond to a reminder',
 			description: 'Mark a reminder done, postpone it, or deliberately ask the trusted support circle for help. It never claims medication adherence or contacts emergency services.',
 			inputSchema: objectSchema({ reminder_id: idProperty, response: { type: 'string', enum: ['done', 'snooze', 'need_help'] }, snooze_minutes: { type: 'integer', minimum: 10, maximum: 240 } }, ['reminder_id', 'response']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => household.respondToReminder(asString(input, 'reminder_id') ?? '', asString(input, 'response') as Parameters<typeof household.respondToReminder>[1], Number(input.snooze_minutes) || 30)
 		},
 		{
@@ -391,24 +392,28 @@ export function careWeaveTools(): CareWeaveToolDefinition[] {
 			name: 'respond_to_help_request', title: 'Respond to an older adult help request',
 			description: 'In the fictional challenge household, record that the named permitted supporter acknowledged a help request or completed the help. Requires active respond-to-help permission and never changes a medical appointment. A production adapter must derive supporter identity from authentication instead of trusting supporter_person_id.',
 			inputSchema: objectSchema({ supporter_person_id: idProperty, reminder_id: idProperty, response: { type: 'string', enum: ['acknowledged', 'completed'] } }, ['supporter_person_id', 'reminder_id', 'response']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => household.respondToHelpRequest(asString(input, 'supporter_person_id') ?? '', asString(input, 'reminder_id') ?? '', asString(input, 'response') as 'acknowledged' | 'completed')
 		},
 		{
 			name: 'record_care_visit_status', title: 'Record a care visit status',
 			description: 'In the fictional challenge household, record scheduled, checked-in, completed, late, or missed status for the named carer assigned to the visit. It updates only shared visit status and never exposes professional care notes. A production adapter must derive carer identity from authentication instead of trusting carer_person_id.',
 			inputSchema: objectSchema({ carer_person_id: idProperty, commitment_id: idProperty, status: { type: 'string', enum: ['scheduled', 'checked_in', 'completed', 'late', 'missed'] }, observed_at: { type: 'string', format: 'date-time' } }, ['carer_person_id', 'commitment_id', 'status', 'observed_at']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => household.recordCareVisitUpdate(asString(input, 'carer_person_id') ?? '', asString(input, 'commitment_id') ?? '', asString(input, 'status') as Parameters<typeof household.recordCareVisitUpdate>[2], asString(input, 'observed_at') ?? '')
 		},
 		{
 			name: 'update_support_offer_fulfillment', title: 'Update accepted family help',
 			description: 'In the fictional challenge household, record that the named supporter who made an accepted offer is handling it or completed it. This updates coordination state only and never edits the calendar. A production adapter must derive supporter identity from authentication instead of trusting supporter_person_id.',
 			inputSchema: objectSchema({ supporter_person_id: idProperty, offer_id: idProperty, status: { type: 'string', enum: ['acknowledged', 'completed'] } }, ['supporter_person_id', 'offer_id', 'status']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => household.updateSupportOfferFulfillment(asString(input, 'supporter_person_id') ?? '', asString(input, 'offer_id') ?? '', asString(input, 'status') as 'acknowledged' | 'completed')
 		},
 		{
 			name: 'approve_action_plan', title: 'Approve and execute action plan',
 			description: 'Execute a specific, still-current draft after explicit user approval. Without Gmail, this saves the displayed email as a local suggestion without sending it and updates statuses. It never silently changes an appointment time.',
 			inputSchema: objectSchema({ plan_id: idProperty, user_confirmed: { type: 'boolean', const: true, description: 'Must be true only after the user explicitly approves the exact displayed plan.' } }, ['plan_id', 'user_confirmed']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => input.user_confirmed === true ? household.approvePlan(asString(input, 'plan_id') ?? '') : failure('Explicit user confirmation is required. No actions were performed.')
 		},
 		{
@@ -421,24 +426,28 @@ export function careWeaveTools(): CareWeaveToolDefinition[] {
 			name: 'apply_confirmed_change', title: 'Apply externally confirmed appointment change',
 			description: 'Apply a new appointment time only after a real confirmation from the clinic has been verified. This changes the household calendar and is not for merely requested changes.',
 			inputSchema: objectSchema({ commitment_id: idProperty, start_at: { type: 'string', format: 'date-time' }, end_at: { type: 'string', format: 'date-time' }, confirmation_note: { type: 'string', minLength: 3, maxLength: 500 }, confirmation_verified: { type: 'boolean', const: true } }, ['commitment_id', 'start_at', 'end_at', 'confirmation_note', 'confirmation_verified']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => input.confirmation_verified === true ? household.applyConfirmedChange(asString(input, 'commitment_id') ?? '', asString(input, 'start_at') ?? '', asString(input, 'end_at') ?? '', asString(input, 'confirmation_note') ?? '') : failure('Verified external confirmation is required. Nothing changed.')
 		},
 		{
 			name: 'apply_confirmed_cancellation', title: 'Apply externally confirmed appointment cancellation',
 			description: 'Mark an appointment cancelled only after a real clinic cancellation has been verified. A saved suggestion or Gmail draft is not sufficient. This removes it from active planning but preserves the record and audit trail.',
 			inputSchema: objectSchema({ commitment_id: idProperty, confirmation_note: { type: 'string', minLength: 3, maxLength: 500 }, confirmation_verified: { type: 'boolean', const: true } }, ['commitment_id', 'confirmation_note', 'confirmation_verified']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => input.confirmation_verified === true ? household.applyConfirmedCancellation(asString(input, 'commitment_id') ?? '', asString(input, 'confirmation_note') ?? '', true) : failure('Verified external confirmation is required. Nothing changed.')
 		},
 		{
 			name: 'undo_last_change', title: 'Undo last household change',
 			description: 'Restore the previous local household state. This cannot recall a real external email; without Gmail, messages are only saved as local suggestions.',
 			inputSchema: objectSchema({ user_confirmed: { type: 'boolean', const: true } }, ['user_confirmed']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => input.user_confirmed === true ? household.undo() : failure('User confirmation is required. Nothing changed.')
 		},
 		{
 			name: 'reset_demo', title: 'Reset fictional demo',
 			description: 'Reset all local fictional demo data. Requires explicit user confirmation and does not affect any connected external service.',
 			inputSchema: objectSchema({ user_confirmed: { type: 'boolean', const: true } }, ['user_confirmed']),
+			annotations: { consequentialHint: true },
 			execute: async (input) => input.user_confirmed === true ? household.reset() : failure('User confirmation is required. Nothing changed.')
 		}
 	];
@@ -480,8 +489,14 @@ export function unregisterCareWeaveTools(): void {
 	window.__careWeaveWebMcpController = undefined;
 }
 
-export function toolInventory(): Array<{ name: string; title: string; description: string; readOnly: boolean }> {
-	return careWeaveTools().map((tool) => ({ name: tool.name, title: tool.title ?? tool.name.replaceAll('_', ' '), description: tool.description, readOnly: tool.annotations?.readOnlyHint === true }));
+export function toolInventory(): Array<{ name: string; title: string; description: string; readOnly: boolean; consequential: boolean }> {
+	return careWeaveTools().map((tool) => ({
+		name: tool.name,
+		title: tool.title ?? tool.name.replaceAll('_', ' '),
+		description: tool.description,
+		readOnly: tool.annotations?.readOnlyHint === true,
+		consequential: tool.annotations?.consequentialHint === true
+	}));
 }
 
 const voiceBlockedTools = new Set([

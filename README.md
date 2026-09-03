@@ -42,7 +42,7 @@ Watch both the board and the agent during those prompts. The agent does not mere
 - [Example WebMCP flows](#example-webmcp-flows)
 - [Run locally](#run-locally)
 - [Connect Gmail with OAuth](#connect-gmail-with-oauth)
-- [Test WebMCP](#test-webmcp-in-a-compatible-host)
+- [WebMCP verification](#webmcp-verification)
 - [Verification](#verification)
 - [Deployment and iPad installation](#deployment)
 - [Accessibility](#accessibility-and-inclusive-care-design)
@@ -281,8 +281,9 @@ interface ToolResult<T = unknown> {
 |---|---|---|
 | `readOnlyHint` | 13 tools | The tool reads state and cannot alter the household or UI. |
 | `untrustedContentHint` | 5 tools | Some returned or accepted fields came from email and must be treated as data, never instructions. |
+| `consequentialHint` | 9 tools | The tool records a meaningful care decision, reconciles confirmed reality, or restores/removes local state, so the host can apply heightened confirmation handling. |
 
-UI-only tools intentionally change the shared screen but not household records. Drafting tools create local plans but do not send messages. The tool description and result communicate these distinctions even where no standard annotation applies.
+UI-only tools intentionally change the shared screen but not household records. Drafting tools create local plans but do not send messages, so they remain separate from consequential execution tools.
 
 ## Complete WebMCP tool reference
 
@@ -339,7 +340,7 @@ These tools are a key part of the WebMCP demonstration: the agent does not merel
 | `create_appointment_request_plan` | `commitment_id`; `request`: `reschedule` or `cancel`; `email_message`: 5–2,000 characters | Staged mutation | Creates an expiring draft containing the verified recipient, subject, message, intended status update, and warnings. It sends nothing and preserves the confirmed appointment time. |
 | `create_attention_reply_plan` | `attention_id`; `email_message`: 2–2,000 characters | Untrusted content, staged mutation | Creates a reviewable reply plan from an attention item. The exact recipient and message must be checked because the source can be wrong or misleading. |
 | `suggest_support` | `supporter_person_id`; `category`: `appointment`, `shopping`, `transport`, or `check_in`; `message`; `commitment_id?` | Challenge role-scoped proposal | Adds a non-binding offer to the older adult's Attention view. The fictional build verifies active `suggest_help` access and changes no calendar item; production must derive supporter identity from authentication. |
-| `respond_to_reminder` | `reminder_id`; `response`: `done`, `snooze`, or `need_help`; `snooze_minutes?`: 10–240 | Bounded state change | Records the person's explicit response. Asking for help makes the request visible only to an active, permitted support circle; it never calls emergency services. |
+| `respond_to_reminder` | `reminder_id`; `response`: `done`, `snooze`, or `need_help`; `snooze_minutes?`: 10–240 | Consequential, bounded state change | Records the person's explicit response. Asking for help makes the request visible only to an active, permitted support circle; it never calls emergency services. |
 
 The two email-planning tools return `needsUserConfirmation: true` and open the same large review dialog a person gets from the touch UI. Support proposals and reminder responses instead use their visible, reversible household states.
 
@@ -347,15 +348,15 @@ The two email-planning tools return `needsUserConfirmation: true` and open the s
 
 | Tool | Inputs | Consequence | Guardrail |
 |---|---|---|---|
-| `approve_action_plan` | `plan_id`; `user_confirmed: true` | Executes the frozen plan | Requires explicit approval of the exact visible plan. A stale or expired revision fails closed. Without Gmail, it saves a local suggestion and sends nothing. |
+| `approve_action_plan` | `plan_id`; `user_confirmed: true` | Consequential; executes the frozen plan | Requires explicit approval of the exact visible plan. A stale or expired revision fails closed. Without Gmail, it saves a local suggestion and sends nothing. |
 | `discard_action_plan` | `plan_id` | Discards one draft | Sends nothing and changes no appointment. |
-| `respond_to_help_request` | `supporter_person_id`; `reminder_id`; `response`: `acknowledged` or `completed` | Challenge help coordination | The fictional build requires active `respond_to_help` permission. Completion cannot be claimed before acknowledgement, it never changes a medical appointment, and production must bind supporter identity to authentication. |
-| `record_care_visit_status` | `carer_person_id`; `commitment_id`; `status`; `observed_at` | Updates shared visit status | Requires the named carer to be assigned to that care event, bounds observation time, prevents completed-state regression, and exposes no professional note. Production must derive identity from authentication. |
-| `update_support_offer_fulfillment` | `supporter_person_id`; `offer_id`; `status`: `acknowledged` or `completed` | Challenge accepted-help ownership | Only the named active supporter who made an accepted offer can report handling or completion in the fictional build. It never edits the calendar; production must derive supporter identity from authentication. |
-| `apply_confirmed_change` | `commitment_id`; `start_at`; `end_at`; `confirmation_note`; `confirmation_verified: true` | Changes the household calendar | Only for a separately verified clinic confirmation. It rejects invalid time ranges and unverified requests. |
-| `apply_confirmed_cancellation` | `commitment_id`; `confirmation_note`; `confirmation_verified: true` | Marks the appointment cancelled | Requires a separately verified clinic confirmation and an existing `cancellation_requested` state. It preserves the appointment record and audit trail while removing it from active planning. |
-| `undo_last_change` | `user_confirmed: true` | Restores the previous local state | Requires confirmation. It cannot recall a real external email; approved external-style demo actions clear the older undo chain. |
-| `reset_demo` | `user_confirmed: true` | Replaces local data with the fictional seed | Requires confirmation and never affects an external service. |
+| `respond_to_help_request` | `supporter_person_id`; `reminder_id`; `response`: `acknowledged` or `completed` | Consequential help coordination | The fictional build requires active `respond_to_help` permission. Completion cannot be claimed before acknowledgement, it never changes a medical appointment, and production must bind supporter identity to authentication. |
+| `record_care_visit_status` | `carer_person_id`; `commitment_id`; `status`; `observed_at` | Consequential visit-status update | Requires the named carer to be assigned to that care event, bounds observation time, prevents completed-state regression, and exposes no professional note. Production must derive identity from authentication. |
+| `update_support_offer_fulfillment` | `supporter_person_id`; `offer_id`; `status`: `acknowledged` or `completed` | Consequential accepted-help ownership | Only the named active supporter who made an accepted offer can report handling or completion in the fictional build. It never edits the calendar; production must derive supporter identity from authentication. |
+| `apply_confirmed_change` | `commitment_id`; `start_at`; `end_at`; `confirmation_note`; `confirmation_verified: true` | Consequential calendar reconciliation | Only for a separately verified clinic confirmation. It rejects invalid time ranges and unverified requests. |
+| `apply_confirmed_cancellation` | `commitment_id`; `confirmation_note`; `confirmation_verified: true` | Consequential cancellation reconciliation | Requires a separately verified clinic confirmation and an existing `cancellation_requested` state. It preserves the appointment record and audit trail while removing it from active planning. |
+| `undo_last_change` | `user_confirmed: true` | Consequential local restoration | Requires confirmation. It cannot recall a real external email; approved external-style demo actions clear the older undo chain. |
+| `reset_demo` | `user_confirmed: true` | Consequential local reset | Requires confirmation and never affects an external service. |
 
 The embedded voice agent does not receive `suggest_support`, `respond_to_help_request`, `record_care_visit_status`, `update_support_offer_fulfillment`, `approve_action_plan`, `apply_confirmed_change`, `apply_confirmed_cancellation`, `undo_last_change`, or `reset_demo`. Role-specific writes are omitted because the wall voice session represents the older adult, not a supporter or carer; final approvals and reconciliation require deliberate touch. The shared dispatcher rejects all nine even if a model attempts to invent a call.
 
@@ -531,9 +532,19 @@ GMAIL_TOKEN_ENCRYPTION_KEY=at_least_32_random_characters
 
 The client secret and encrypted refresh token are never available to browser JavaScript. See the complete [Gmail OAuth registration and test guide](docs/GMAIL_OAUTH.md), including test-user and Google verification requirements.
 
-## Test WebMCP in a compatible host
+## WebMCP verification
 
-Current host availability and controls can change, so check the [official site-tools documentation](https://learn.chatgpt.com/docs/webmcp) first.
+CareWeave includes deterministic browser tests, a simulated registration host, and a six-journey dataset in [`evals/careweave.json`](evals/careweave.json) for Google's experimental WebMCP Evals runner.
+
+The official Chrome smoke runner completed **10/10 tool steps across all six journeys** on 3 September 2026. It exercised structured day understanding, calm-day pacing, visible date focus, route display, review-only clinic drafting, untrusted mailbox content, food coverage, and freshness checks against the real rendered page.
+
+Run the same no-key evaluation with CareWeave open locally:
+
+```bash
+npx webmcp-evals smoke -u http://127.0.0.1:5173 -e evals/careweave.json --chrome-channel chrome
+```
+
+The compatible-host judge path is:
 
 1. Start CareWeave locally or open [care-weave.vercel.app](https://care-weave.vercel.app/).
 2. Open the page in a compatible ChatGPT/Codex built-in browser.
@@ -571,7 +582,7 @@ The automated suite covers:
 - WCAG AA text contrast and axe-core WCAG A/AA checks
 - Reduced motion, forced colours, 200% text reflow, and horizontal-overflow checks
 
-The current verification suite includes 42 unit tests. The latest browser run passed 106 applicable checks across iPad landscape, iPad portrait, and mobile layouts; 44 checks were deliberately skipped where they apply only to another viewport.
+The current verification suite includes 43 unit tests. The latest browser run passed 106 applicable checks across iPad landscape, iPad portrait, and mobile layouts; 44 checks were deliberately skipped where they apply only to another viewport. Google's WebMCP smoke runner additionally passed 10/10 live tool steps across six journeys in Chrome 152.
 
 ## Deployment
 

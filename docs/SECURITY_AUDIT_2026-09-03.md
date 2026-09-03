@@ -87,11 +87,12 @@ explicitly recommends CAPTCHA/Turnstile for abuse prevention. See the
 
 ## Verification performed
 
-- `npm run test`: 41/41 unit tests passed.
+- `npm run test`: 43/43 unit tests passed.
 - `npm run check`: zero Svelte errors or warnings.
 - `npm run build`: static production build succeeded.
-- `npm run test:e2e`: 97 applicable browser checks passed; 38
+- `npm run test:e2e`: 106 applicable browser checks passed; 44
   viewport-specific checks were deliberately skipped.
+- Google's Chrome WebMCP smoke runner: 10/10 live tool steps passed across six journeys.
 - `npm audit --omit=dev`: zero production vulnerabilities.
 - Full `npm audit`: three linked low-severity entries caused by the one
   transitive `cookie` advisory; zero moderate, high, or critical entries.

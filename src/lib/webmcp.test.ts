@@ -31,6 +31,24 @@ describe('shared WebMCP and voice tools', () => {
 		expect(voiceNames).not.toContain('reset_demo');
 	});
 
+	it('marks meaningful decisions and reconciliations as consequential', () => {
+		const consequentialNames = careWeaveTools()
+			.filter((tool) => tool.annotations?.consequentialHint === true)
+			.map((tool) => tool.name);
+
+		expect(consequentialNames).toEqual([
+			'respond_to_reminder',
+			'respond_to_help_request',
+			'record_care_visit_status',
+			'update_support_offer_fulfillment',
+			'approve_action_plan',
+			'apply_confirmed_change',
+			'apply_confirmed_cancellation',
+			'undo_last_change',
+			'reset_demo'
+		]);
+	});
+
 	it('refuses a final approval even if a voice model invents the tool call', async () => {
 		const result = await executeCareWeaveTool('approve_action_plan', { plan_id: 'anything', user_confirmed: true });
 		expect(result).toMatchObject({ success: false });

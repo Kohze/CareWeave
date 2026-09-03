@@ -98,6 +98,12 @@ test('calendar events open complete details and clearly track selection', async 
 	await expect(details.getByText(/There is food ready/)).toBeVisible();
 	await expect(details.getByText('At home', { exact: true })).toBeVisible();
 
+	const walkCard = page.getByRole('article', { name: /Short walk with Sam/ });
+	await expect(walkCard.getByRole('button', { name: 'Route', exact: true })).toHaveCount(0);
+	await walkCard.getByRole('button').first().click();
+	details = page.getByLabel('Helpful details');
+	await expect(details.getByRole('button', { name: 'Show route on map' })).toBeVisible();
+
 	await page.getByRole('button', { name: 'Next day' }).click();
 	const doctorButton = page.getByRole('article', { name: /Appointment with Dr Patel/ }).getByRole('button').first();
 	await doctorButton.click();
@@ -415,7 +421,8 @@ test('real map is interactive, attributed, and keeps written directions', async 
 	await page.route('https://tile.openstreetmap.org/**', (request) => request.abort());
 	await page.getByRole('button', { name: 'Next day' }).click();
 	const appointment = page.getByRole('article', { name: /Appointment with Dr Patel/ });
-	await appointment.getByRole('button', { name: 'Route', exact: true }).click();
+	await appointment.getByRole('button').first().click();
+	await page.getByLabel('Helpful details').getByRole('button', { name: 'Show route on map' }).click();
 	await expect(page.getByRole('heading', { name: 'To Green Lane Medical Centre' })).toBeVisible();
 	const map = page.getByRole('region', { name: /Interactive map from Home/ });
 	await expect(map).toHaveAttribute('data-map-ready', 'true');
@@ -442,7 +449,8 @@ test('real map is interactive, attributed, and keeps written directions', async 
 test('map failure leaves the route usable', async ({ page }, testInfo) => {
 	test.skip(testInfo.project.name !== 'ipad-landscape', 'Offline fallback is checked once.');
 	await page.getByRole('button', { name: 'Next day' }).click();
-	await page.getByRole('article', { name: /Appointment with Dr Patel/ }).getByRole('button', { name: 'Route', exact: true }).click();
+	await page.getByRole('article', { name: /Appointment with Dr Patel/ }).getByRole('button').first().click();
+	await page.getByLabel('Helpful details').getByRole('button', { name: 'Show route on map' }).click();
 	await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 	await expect(page.getByRole('status').filter({ hasText: /background unavailable/i })).toBeVisible();
 	await expect(page.getByText(/follow the highlighted walking route/i)).toBeVisible();
@@ -453,7 +461,8 @@ test('real map fits the portrait iPad without horizontal overflow', async ({ pag
 	test.skip(testInfo.project.name !== 'ipad-portrait', 'Portrait map layout check.');
 	await page.route('https://tile.openstreetmap.org/**', (request) => request.abort());
 	await page.getByRole('button', { name: 'Next day' }).click();
-	await page.getByRole('article', { name: /Appointment with Dr Patel/ }).getByRole('button', { name: 'Route', exact: true }).click();
+	await page.getByRole('article', { name: /Appointment with Dr Patel/ }).getByRole('button').first().click();
+	await page.getByLabel('Helpful details').getByRole('button', { name: 'Show route on map' }).click();
 	const map = page.getByRole('region', { name: /Interactive map from Home/ });
 	await expect(map).toHaveAttribute('data-map-ready', 'true');
 	expect(await map.evaluate((node) => node.getBoundingClientRect().height)).toBe(320);

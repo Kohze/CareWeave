@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 
-	type ToolSummary = { name: string; title: string; description: string; readOnly: boolean };
+	type ToolSummary = { name: string; title: string; description: string; readOnly: boolean; consequential: boolean };
 	type ToolGroup = { title: string; note: string; icon: string; tone: string; tools: ToolSummary[] };
 
 	let {
@@ -65,6 +65,7 @@
 						<details>
 							<summary><span><strong>{tool.title}</strong><code>{tool.name}</code></span><Icon name="arrow" size={18} /></summary>
 							<p>{tool.description}</p>
+							{#if tool.consequential}<span class="tool-annotation"><Icon name="shield" size={15} /> Consequential action</span>{/if}
 						</details>
 					{/each}
 				</div>

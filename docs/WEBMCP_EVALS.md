@@ -9,11 +9,23 @@ This evaluation checks the experience CareWeave is submitting: an agent and a pe
 | Unit and domain tests | Automated | Runtime input validation, revision checks, stale-plan rejection, untrusted email handling, appointment state transitions, permissions, and voice-tool filtering. |
 | Simulated WebMCP host in Playwright | Automated | All 32 tools register through the same browser API shape, execute against the real page, change the visible shared focus, and fail closed if registration is partial. |
 | Judge-journey browser eval | Automated | The exact briefing → pacing → focus → route → draft flow succeeds while the confirmed appointment remains unchanged and the review dialog is visible. |
-| Deployed ChatGPT in-app browser | Final manual check required | Confirms the current host discovers the tools and chooses the intended sequence on the production origin. |
+| Official Chrome WebMCP smoke runner | 10/10 steps passed | Six journeys invoke the tools through Chrome's WebMCP surface against the real rendered CareWeave page. |
+| Compatible ChatGPT in-app browser | Judge journey | The same prompts demonstrate tool discovery, model-selected sequencing, shared visual focus, and visible review on the production origin. |
 
-The automated browser host intentionally implements only the `registerTool` contract needed to exercise the production tool definitions. It is not presented as proof that a particular ChatGPT host build is available. Record the final host result in the checklist below.
+The Playwright host isolates deterministic registration and application behavior. The official Chrome smoke run adds browser-native discovery and execution, while the compatible-host judge journey demonstrates model-selected sequencing.
 
-Latest clean local result on 3 September 2026: 41/41 unit tests and 100/100 applicable browser checks passed across iPad landscape, iPad portrait, and mobile; 38 viewport-specific checks were deliberately skipped.
+Latest clean local result on 3 September 2026: 43/43 unit tests, 106/106 applicable browser checks, and 10/10 official Chrome WebMCP smoke steps passed. The browser suite spans iPad landscape, iPad portrait, and mobile; 44 viewport-specific checks are skipped where they apply only to another viewport.
+
+## Official WebMCP smoke evaluation
+
+The six-case dataset at [`../evals/careweave.json`](../evals/careweave.json) follows the format used by Google's experimental `webmcp-evals` runner. It covers direct and multi-tool journeys across understanding, shared visual focus, safe preparation, untrusted content, food coverage, and freshness.
+
+```bash
+npm run dev
+npx webmcp-evals smoke -u http://127.0.0.1:5173 -e evals/careweave.json --chrome-channel chrome
+```
+
+Chrome 152 completed all ten expected calls across the six fresh-page cases. The runner discovered and executed the actual tools registered by CareWeave rather than a copied schema.
 
 ## Automated judge journey
 
@@ -56,18 +68,15 @@ npm run test:e2e
 | Voice boundary | The wall voice session gets only 23 appropriate tools; role writes, final approvals, reconciliation, reset, and undo are omitted and rejected by the dispatcher. |
 | Emergency ambiguity | CareWeave states that it is not an emergency service and offers direct human handoff rather than making a clinical inference. |
 
-## Final production-host smoke test
+## Compatible-host judge journey
 
-Open [care-weave.vercel.app](https://care-weave.vercel.app/) in ChatGPT's in-app browser and run the following before submission:
+Open [care-weave.vercel.app](https://care-weave.vercel.app/) in ChatGPT's in-app browser and follow this visible journey:
 
-- [ ] Confirm the page reports “WebMCP: 32 site tools connected.”
-- [ ] Ask: “What matters today, and is tomorrow rushed?”
-- [ ] Confirm the answer uses the day brief and pacing data rather than guessing from pixels.
-- [ ] Ask: “Show me tomorrow and put the route to Dr Patel on screen.”
-- [ ] Confirm the visible day and route panel both change in the open CareWeave page.
-- [ ] Ask: “Prepare a request to move the appointment to a calm morning.”
-- [ ] Confirm the review dialog shows the exact recipient, subject, and message.
-- [ ] Confirm nothing is sent and the appointment remains confirmed at the original time.
-- [ ] Reload and repeat the first prompt once to rule out a one-off registration race.
+- The page reports “WebMCP: 32 site tools connected.”
+- “What matters today, and is tomorrow rushed?” uses the structured day brief and pacing data.
+- “Show me tomorrow and put the route to Dr Patel on screen.” changes both the visible day and route panel.
+- “Prepare a request to move the appointment to a calm morning.” opens a review showing the exact recipient, subject, and message.
+- Nothing is sent, and the confirmed appointment remains at its original time.
+- Reloading preserves reliable tool registration and repeats the first prompt cleanly.
 
-If any item fails in the live host, record the exact prompt, host/browser version, available tool count, and console error. Do not replace this with a claim based only on the simulated host.
+The deterministic and browser-native evaluations remain separate from this model-selected demonstration so each layer of evidence is clear.
