@@ -1,8 +1,10 @@
 # CareWeave
 
-### Everyday care, woven together.
+### Daily life, made manageable. Independence, kept intact.
 
-CareWeave weaves appointments, care visits, food, weather, routes, and actionable email into one calm shared dayboard where a person and WebMCP agent can understand the day, focus the same screen, and prepare safe next steps together.
+When daily life depends on appointments, carers, transport, food, reminders, and important messages, managing it all can become a job of its own. CareWeave turns that fragmented work into one calm shared dayboard.
+
+It is designed for **older people, disabled people, retirees with changing support needs, people recovering from illness, and anyone whose energy, memory, mobility, or concentration makes everyday coordination harder**. CareWeave helps without taking over: the person remains at the centre, trusted people can support them without unnecessary surveillance, and an agent can handle complexity while every important decision stays visible.
 
 **Live app:** [care-weave.vercel.app](https://care-weave.vercel.app/)
 
@@ -28,6 +30,8 @@ That loop—**understand together, focus the shared screen, prepare safely, let 
 ## Contents
 
 - [The idea](#the-idea)
+- [Who CareWeave is for](#who-careweave-is-for)
+- [Why this matters](#why-this-matters)
 - [Why WebMCP matters here](#why-webmcp-matters-here)
 - [Feature tour](#feature-tour)
 - [Architecture](#architecture)
@@ -39,19 +43,45 @@ That loop—**understand together, focus the shared screen, prepare safely, let 
 - [Test WebMCP](#test-webmcp-in-a-compatible-host)
 - [Verification](#verification)
 - [Deployment and iPad installation](#deployment)
-- [Accessibility](#accessibility-and-older-adult-design)
+- [Accessibility](#accessibility-and-inclusive-care-design)
 - [Safety and privacy](#safety-and-privacy-model)
 - [Project structure](#project-structure)
 
 ## The idea
 
-Most calendars are designed for people who already know how to operate calendars. CareWeave starts with three simpler questions:
+Most digital calendars assume that a person can remember which app holds each fact, interpret a crowded interface, notice changes, plan travel, read every message, and keep track of what is still awaiting confirmation. That is a heavy burden when someone is living with disability, fatigue, reduced dexterity, sight or hearing loss, memory changes, illness, or simply a growing number of care needs.
+
+CareWeave starts with three human questions instead:
 
 1. What is happening today?
 2. Is there anything I need to decide or prepare?
 3. Can you help me deal with it safely?
 
-The interface serves the older adult first, while keeping the same facts understandable to relatives, carers, clinics, and an AI assistant. A person can ask, “When should I leave for the doctor?”, see the relevant appointment and route appear, and hear a short answer. They can ask to move the appointment, but CareWeave will only prepare a reviewable request—the confirmed appointment remains untouched until the clinic replies.
+The interface serves the person receiving support first, while keeping the same facts understandable to relatives, carers, clinics, and an AI assistant. A person can ask, “When should I leave for the doctor?”, see the relevant appointment and route appear, and hear a short answer. They can ask to move the appointment, but CareWeave will only prepare a reviewable request—the confirmed appointment remains untouched until the clinic replies.
+
+## Who CareWeave is for
+
+- **Older people living independently** who want a clear day without learning another complicated productivity system.
+- **Disabled people** whose mobility, fatigue, pain, sensory access, memory, or executive function can make fragmented daily administration disproportionately demanding.
+- **Retirees whose routines have changed** through new appointments, care visits, bereavement, recovery, or a move away from familiar support.
+- **People recovering from illness or injury** who temporarily need more structure and help than usual.
+- **Family members and unpaid carers** who want to be useful without taking control, reading private messages, or constantly checking in.
+- **Professional carers** who need to share a narrow visit status without exposing private household or clinical information.
+
+CareWeave does not assume that age or disability means helplessness. It assumes that badly connected systems create avoidable work—and that good technology should return time, confidence, and control to the person.
+
+## Why this matters
+
+A missed clinic message is not merely “calendar friction.” It can mean a missed appointment, a wasted journey, or days of uncertainty. A delayed care visit, an unfinished food shop, or an unclear transport plan can determine whether someone feels secure at home. Today, those details are often spread across email, calendars, weather apps, maps, handwritten notes, and several people's memories.
+
+CareWeave creates social value in four ways:
+
+1. **Protect independence.** It makes support easier to receive without transferring authority to a relative, carer, or AI agent.
+2. **Reduce cognitive and administrative load.** It turns many sources into a calm answer to “What matters now?”
+3. **Make informal care sustainable.** Trusted people see only what they need and can take ownership of specific help instead of relying on repeated calls and guesswork.
+4. **Prevent quiet coordination failures.** Requests, confirmations, preparations, routes, and unresolved tasks remain visibly distinct rather than disappearing into chat or inbox history.
+
+The ambition is not to automate a person's life. It is to make daily life require less effort while preserving dignity, privacy, and choice.
 
 ## Why WebMCP matters here
 
@@ -76,7 +106,7 @@ CareWeave is not a conventional dashboard with a chat box attached. WebMCP lets 
 |---|---|
 | **WebMCP leverage** | 32 validated tools form complete workflows across reading, planning, shared visual focus, reviewable drafts, reminders, and support—with trust annotations, state revisions, and rollback-safe registration. |
 | **Execution** | A deployed, installable, responsive PWA with deterministic demo data, accessible touch UI, weather, maps, voice, offline shell, and automated browser tests. |
-| **Potential impact** | A specific audience—older adults and trusted supporters—gets one calmer way to coordinate fragmented appointments, care, food, travel, and messages. |
+| **Potential impact** | Older people, disabled people, people recovering from illness, and their trusted supporters get one calmer way to coordinate fragmented appointments, care, food, travel, and messages—without sacrificing autonomy or privacy. |
 | **Creativity and ambition** | The agent and person collaborate through the same calm household surface; the design treats autonomy, shared attention, and truthful state as product features rather than adding chat to a calendar. |
 
 ### Why the challenge build is intentionally account-free
@@ -561,9 +591,9 @@ Equivalent serverless functions can be created for Cloudflare, AWS, or another p
 
 The manifest, Apple web-app metadata, responsive layout, service worker, and standalone display mode are already included. WebMCP itself should be demonstrated in a compatible ChatGPT/Codex host; the embedded Realtime agent provides the independent Safari voice experience.
 
-## Accessibility and older-adult design
+## Accessibility and inclusive care design
 
-CareWeave was designed around a 1024×768 wall-mounted iPad, with portrait-iPad and phone fallbacks.
+CareWeave was designed around the needs of older adults and disabled people, using a 1024×768 wall-mounted iPad as the primary surface with portrait-iPad and phone fallbacks. The interface aims to reduce memory demands, precision demands, visual clutter, and the number of steps needed to understand what happens next.
 
 - Day view instead of a dense month grid
 - Large type and plain-language labels
@@ -578,7 +608,7 @@ CareWeave was designed around a 1024×768 wall-mounted iPad, with portrait-iPad 
 - No automatic diagnosis or treatment recommendations
 - No hidden countdown pressure; review plans remain available for two hours unless state changes
 
-The repository contains the full [older-adult UX audit](docs/OLDER_ADULT_UX_AUDIT.md). Automated conformance evidence does not replace moderated testing with older adults, VoiceOver users, people with reduced dexterity or hearing, carers, and real mounted-iPad conditions.
+The repository contains the full [older-adult UX audit](docs/OLDER_ADULT_UX_AUDIT.md). Automated conformance evidence does not replace moderated testing with older and disabled people, screen-reader users, people with reduced dexterity, memory, energy, sight, or hearing, carers, and real mounted-iPad conditions.
 
 ## Safety and privacy model
 
@@ -674,7 +704,7 @@ The complete under-three-minute walkthrough is in [`docs/DEMO_SCRIPT.md`](docs/D
 2. **Shared context, not invisible automation.** Agent actions should move the screen when visual context helps.
 3. **A request is not confirmation.** External open loops remain visible and truthful.
 4. **Prepare freely, act deliberately.** Drafting can be conversational; consequences require explicit review.
-5. **Protect autonomy.** The system supports the older adult rather than transferring control to a carer or agent.
+5. **Protect autonomy.** The system supports the person receiving care rather than transferring control to a relative, carer, or agent.
 6. **Fail visibly and safely.** Missing routes, stale plans, provider ambiguity, and unavailable voice never become optimistic success.
 
 ## Further documentation
