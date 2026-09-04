@@ -1,5 +1,9 @@
 # Submission package
 
+For copy-ready variants sized for common hackathon fields, see
+[`SUBMISSION_COPY.md`](SUBMISSION_COPY.md).
+The final Devpost story is available in [`DEVPOST_STORY.md`](DEVPOST_STORY.md).
+
 ## One-line pitch
 
 CareWeave turns fragmented everyday care into one calm shared dayboard where people and WebMCP agents understand, focus, and prepare together—without taking control away from the person at the centre.

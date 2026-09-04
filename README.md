@@ -1,18 +1,20 @@
 # CareWeave
 
-### Daily life, made manageable. Independence, kept intact.
+![CareWeave, everyday care woven together](https://i.imgur.com/qstaOjt.jpeg)
 
-When daily life depends on appointments, carers, transport, food, reminders, and important messages, managing it all can become a job of its own. CareWeave turns that fragmented work into one calm shared dayboard.
+### Everyday care, woven together. Independence, kept intact.
 
-It is designed for **older people, disabled people, retirees with changing support needs, people recovering from illness, and anyone whose energy, memory, mobility, or concentration makes everyday coordination harder**. CareWeave helps without taking over: the person remains at the centre, trusted people can support them without unnecessary surveillance, and an agent can handle complexity while every important decision stays visible.
+**CareWeave gives older and disabled people one calm place to coordinate daily care with loved ones and WebMCP agents, reducing complexity while protecting independence, privacy, and human control.**
 
-**Live app:** [care-weave.vercel.app](https://care-weave.vercel.app/)
+An appointment reminder arrives by email. The journey depends on the weather. A carer is visiting that morning. A son can help, but should not need access to private messages. None of these facts is difficult on its own. Keeping them aligned is.
+
+CareWeave brings appointments, care visits, food, shopping, reminders, travel, weather, and important messages into one accessible dayboard. A WebMCP agent can understand the same structured household state the person sees, move the shared screen to the right day or route, and prepare an exact action for review. The agent handles coordination. The person keeps the decision.
+
+**Live app:** [care-weave.vercel.app](https://care-weave.vercel.app/) · **Public source:** [github.com/Kohze/CareWeave](https://github.com/Kohze/CareWeave) · **License:** [MIT](LICENSE)
 
 Built for the OpenAI WebMCP Challenge with SvelteKit, Svelte 5, Vite, TypeScript, OpenAI Realtime, Leaflet, OpenStreetMap, Open-Meteo, Atmosphere, Meteocons, and Lucide.
 
-> **Why WebMCP is essential:** CareWeave is not a dashboard with a chatbot attached. It is a shared, consent-aware workspace for a person and their agent. WebMCP gives the agent structured access to the same care context the person sees, lets it bring the relevant day, appointment, or route into view, and allows it to prepare useful actions without silently taking control. The result is assistance that reduces cognitive load while preserving autonomy.
-
-![CareWeave running in an iPad landscape viewport](artifacts/audit-final-ipad-landscape.png)
+> **Why WebMCP is essential:** CareWeave is not a dashboard with a chatbot attached. WebMCP lets the agent understand, focus, and prepare through bounded site tools while the visible dayboard and the person remain the source of truth. A suggestion is not a draft, a draft is not a sent request, and a request is not a confirmed change.
 
 > [!IMPORTANT]
 > CareWeave is a challenge prototype, not a medical device or production care system. The bundled household, clinic, mailbox, addresses, and routes are fictional. No real email is sent by the demo.
@@ -119,10 +121,11 @@ The core innovation is therefore not “AI can read a calendar.” It is that an
 
 | Criterion | What CareWeave demonstrates |
 |---|---|
-| **WebMCP leverage** | 32 validated tools form complete workflows across reading, planning, shared visual focus, reviewable drafts, reminders, and support—with trust annotations, state revisions, and rollback-safe registration. |
-| **Execution** | A deployed, installable, responsive PWA with deterministic demo data, accessible touch UI, weather, maps, voice, offline shell, and automated browser tests. |
-| **Potential impact** | Older people, disabled people, people recovering from illness, and their trusted supporters get one calmer way to coordinate fragmented appointments, care, food, travel, and messages—without sacrificing autonomy or privacy. |
-| **Creativity and ambition** | The agent and person collaborate through the same calm household surface; the design treats autonomy, shared attention, and truthful state as product features rather than adding chat to a calendar. |
+| **Usefulness** | CareWeave reduces the daily coordination burden around appointments, care, food, travel, reminders, and messages while protecting independence and privacy. |
+| **Originality** | The product treats truthful state, shared attention, and consent as core interaction design. It is a calm household surface for human-agent cooperation, not chat added to a calendar. |
+| **Execution** | A deployed, installable, responsive PWA with deterministic demo data, accessible touch UI, maps, weather, voice, offline support, and automated browser tests. |
+| **Thoughtful use of WebMCP** | Thirty-two validated tools form complete workflows across understanding, planning, visible focus, reviewable actions, reminders, and support, with trust annotations, state revisions, and rollback-safe registration. |
+| **Human-agent experience** | The agent reasons over the same state the person sees, moves the shared interface to the relevant context, and stops consequential work at a clear human decision point. |
 
 ### Why the challenge build is intentionally account-free
 
@@ -130,19 +133,19 @@ WebMCP operates on the same open CareWeave page as the person, so a remote datab
 
 ## Feature tour
 
-| Calm dayboard | Real map and written route |
+| Seven-day clarity | Real map and written route |
 |---|---|
-| ![The CareWeave day view](artifacts/audit-final-day.png) | ![A route displayed on a real map](artifacts/audit-final-careweave-route.png) |
+| ![Seven readable days with weather and plans](artifacts/audit-final-next-7-days.png) | ![A route displayed on a real map after opening appointment details](artifacts/audit-final-careweave-route.png) |
 
 | Human review before action | Conversational voice |
 |---|---|
-| ![A clinic email review dialog](artifacts/audit-final-review-dialog.png) | ![The CareWeave conversational voice dialog](artifacts/audit-final-voice-dialog.png) |
+| ![A clinic email review dialog](artifacts/audit-final-review-dialog.png) | ![CareWeave listening in a live conversational voice session](artifacts/audit-final-voice-dialog.png) |
 
 | Trusted family support | Privacy screensaver |
 |---|---|
 | ![The privacy-limited CareWeave family supporter dashboard](artifacts/audit-final-family-support.png) | ![The CareWeave live weather privacy screen](artifacts/audit-final-screensaver.png) |
 
-| Inspectable WebMCP tools | A reply in the person’s own words |
+| Structured WebMCP tools | A reply in the person’s own words |
 |---|---|
 | ![The grouped catalogue of CareWeave WebMCP tools](artifacts/audit-final-webmcp-tools.png) | ![A voice-dictated reply ready for human review](artifacts/audit-final-voice-reply-composer.png) |
 
@@ -582,7 +585,7 @@ The automated suite covers:
 - WCAG AA text contrast and axe-core WCAG A/AA checks
 - Reduced motion, forced colours, 200% text reflow, and horizontal-overflow checks
 
-The current verification suite includes 43 unit tests. The latest browser run passed 106 applicable checks across iPad landscape, iPad portrait, and mobile layouts; 44 checks were deliberately skipped where they apply only to another viewport. Google's WebMCP smoke runner additionally passed 10/10 live tool steps across six journeys in Chrome 152.
+The current verification suite includes 43 unit tests. The latest browser run passed 106 applicable checks across iPad landscape, iPad portrait, and mobile layouts; 44 checks were deliberately skipped where they apply only to another viewport. Google's WebMCP smoke runner additionally passed 10/10 live tool steps across six journeys in Chrome 152. A production recheck on 3 September 2026 confirmed all 32 tools, all 9 consequential-action annotations, the registered service worker, and a complete Realtime WebRTC connection reaching the visible **Listening** state.
 
 ## Deployment
 
@@ -750,6 +753,7 @@ The complete under-three-minute walkthrough is in [`docs/DEMO_SCRIPT.md`](docs/D
 - [Older-adult UX audit and repairs](docs/OLDER_ADULT_UX_AUDIT.md)
 - [50-user readiness and missing-capabilities audit](docs/50-USER-READINESS-AUDIT.md)
 - [Three-minute demo script](docs/DEMO_SCRIPT.md)
+- [Final Devpost project story](docs/DEVPOST_STORY.md)
 - [Submission copy and checklist](docs/SUBMISSION.md)
 - [Security and production integration](docs/SECURITY.md)
 
